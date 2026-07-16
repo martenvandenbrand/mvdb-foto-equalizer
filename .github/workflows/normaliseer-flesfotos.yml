@@ -1,0 +1,58 @@
+name: Normaliseer flesfoto's
+
+# Handmatig starten via de "Run workflow"-knop op het Actions-tabblad.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run (niets naar Shopify schrijven, alleen bewerkte foto's als artifact)"
+        type: boolean
+        default: true
+      delete_original:
+        description: "Originele foto verwijderen na plaatsen nieuwe"
+        type: boolean
+        default: false
+      first_image_only:
+        description: "Alleen de hoofdfoto per product bewerken"
+        type: boolean
+        default: true
+      filter_query:
+        description: "Productfilter (Shopify-syntax, bv. tag:rood). Leeg = alle producten"
+        type: string
+        default: ""
+      bottle_height:
+        description: "Hoogte van de fles in px (canvas is 2048)"
+        type: string
+        default: "1600"
+
+jobs:
+  normaliseer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+
+      - name: Draai normalisator
+        env:
+          SHOP: ${{ secrets.SHOP }}
+          SHOPIFY_ADMIN_TOKEN: ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DELETE_ORIGINAL: ${{ inputs.delete_original }}
+          FIRST_IMAGE_ONLY: ${{ inputs.first_image_only }}
+          FILTER_QUERY: ${{ inputs.filter_query }}
+          BOTTLE_HEIGHT: ${{ inputs.bottle_height }}
+        run: python normaliseer_flesfotos.py
+
+      - name: Bewerkte foto's als artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bewerkte-flesfotos
+          path: backup/
+          if-no-files-found: ignore
