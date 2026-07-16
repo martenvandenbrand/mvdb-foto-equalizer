@@ -14,13 +14,17 @@ requirements.txt
 
 ## Eenmalige setup
 
-**1. Shopify custom app** — Settings → Apps and sales channels → Develop apps →
-Create an app. Scopes: `read_products`, `write_products`, `write_files`.
-Installeer en kopieer de Admin API access token (`shpat_…`).
+**1. App aanmaken in de Dev Dashboard** — sinds 1 januari 2026 kun je in de Shopify-admin
+geen custom apps met een permanent `shpat_`-token meer maken. Ga naar de Dev Dashboard
+(dev.shopify.com/dashboard) → **Create app**. Stel de access scopes in: `read_products`,
+`write_products`, `write_files`. Installeer de app in je eigen winkel. Onder **Settings**
+vind je de **Client ID** en **Client Secret**. Het script ruilt die via de client
+credentials grant automatisch in voor een tijdelijk access token (24u geldig).
 
 **2. GitHub secrets** — Repo → Settings → Secrets and variables → Actions → New secret:
 - `SHOP` = `jouwwinkel.myshopify.com` (de myshopify-URL, niet koperenkaraf.nl)
-- `SHOPIFY_ADMIN_TOKEN` = je `shpat_…` token
+- `SHOPIFY_CLIENT_ID` = de Client ID uit de Dev Dashboard
+- `SHOPIFY_CLIENT_SECRET` = de Client Secret uit de Dev Dashboard
 
 ## Draaien
 

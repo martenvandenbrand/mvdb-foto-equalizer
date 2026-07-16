@@ -21,7 +21,8 @@ def env_int(key, default):       return int(os.environ.get(key, default))
 
 # ======================= CONFIGURATIE (via env / Action-inputs) =======================
 SHOP            = env("SHOP", "jouwwinkel.myshopify.com")   # de .myshopify.com URL
-TOKEN           = env("SHOPIFY_ADMIN_TOKEN", "")
+CLIENT_ID       = env("SHOPIFY_CLIENT_ID", "")             # uit Dev Dashboard -> Settings
+CLIENT_SECRET   = env("SHOPIFY_CLIENT_SECRET", "")         # uit Dev Dashboard -> Settings
 API_VERSION     = env("API_VERSION", "2026-01")
 
 CANVAS          = env_int("CANVAS", 2048)
@@ -35,8 +36,21 @@ FILTER_QUERY     = env("FILTER_QUERY", "")          # bv. "tag:rood", leeg = all
 BACKUP_DIR       = pathlib.Path("backup")
 # ======================================================================================
 
-API_URL = f"https://{SHOP}/admin/api/{API_VERSION}/graphql.json"
-HEADERS = {"X-Shopify-Access-Token": TOKEN, "Content-Type": "application/json"}
+API_URL   = f"https://{SHOP}/admin/api/{API_VERSION}/graphql.json"
+TOKEN_URL = f"https://{SHOP}/admin/oauth/access_token"
+
+_access_token = None   # wordt in main() opgehaald via de client credentials grant
+
+
+def get_access_token():
+    """Ruil client_id + client_secret in voor een access token (24u geldig)."""
+    r = requests.post(TOKEN_URL, timeout=30, data={
+        "grant_type": "client_credentials",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+    })
+    r.raise_for_status()
+    return r.json()["access_token"]
 
 
 # ------------------------- Beeldbewerking (RGBA / transparant) -------------------------
@@ -56,8 +70,9 @@ def normalize(im):
 
 # ------------------------- Shopify GraphQL -------------------------
 def gql(query, variables=None):
+    headers = {"X-Shopify-Access-Token": _access_token, "Content-Type": "application/json"}
     for attempt in range(6):
-        r = requests.post(API_URL, headers=HEADERS,
+        r = requests.post(API_URL, headers=headers,
                           data=json.dumps({"query": query, "variables": variables or {}}))
         if r.status_code == 429:
             time.sleep(int(r.headers.get("Retry-After", 2))); continue
@@ -139,8 +154,10 @@ def create_media(product_id, resource_url, alt):
 
 # ------------------------- Hoofdroutine -------------------------
 def main():
-    if not TOKEN or SHOP.startswith("jouwwinkel"):
-        sys.exit("Ontbrekende SHOP en/of SHOPIFY_ADMIN_TOKEN (zet ze als GitHub secrets).")
+    global _access_token
+    if not CLIENT_ID or not CLIENT_SECRET or SHOP.startswith("jouwwinkel"):
+        sys.exit("Ontbrekende SHOP / SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET (zet ze als GitHub secrets).")
+    _access_token = get_access_token()
     BACKUP_DIR.mkdir(exist_ok=True)
     print(f"== {'DRY-RUN' if DRY_RUN else 'LIVE'} | {SHOP} | canvas {CANVAS} | fleshoogte {BOTTLE_HEIGHT} "
           f"| eerste foto: {FIRST_IMAGE_ONLY} | verwijder origineel: {DELETE_ORIGINAL} ==\n")
