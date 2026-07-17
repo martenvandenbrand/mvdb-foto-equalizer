@@ -135,16 +135,32 @@ FLAVOR_SYS = ("Je bent sommelier. Geef UITSLUITEND een korte, kommagescheiden li
               "concrete, afbeeldbare smaak- en geurelementen (fruit, kruiden, bloemen, noten, hout) "
               "uit de wijnbeschrijving. Geen zinnen, geen uitleg, alleen de losse woorden.")
 
+def _openai_post(url, tries=5, **kwargs):
+    """POST met backoff op tijdelijke 429/5xx en heldere foutmeldingen."""
+    r = None
+    for attempt in range(tries):
+        r = requests.post(url, **kwargs)
+        if r.status_code < 400:
+            return r
+        body = r.text
+        if r.status_code == 429 and "insufficient_quota" in body:
+            raise RuntimeError("OpenAI weigert: geen tegoed/quota op deze API-sleutel. Stel billing in "
+                               "en zet credits klaar in de OpenAI-console (en verifieer je organisatie "
+                               "voor GPT Image).")
+        if r.status_code == 429 or r.status_code >= 500:
+            time.sleep(float(r.headers.get("retry-after", 2 * (attempt + 1)))); continue
+        raise RuntimeError(f"OpenAI {r.status_code}: {body[:400]}")
+    raise RuntimeError(f"OpenAI bleef {r.status_code} geven na {tries} pogingen: {r.text[:300]}")
+
 def extract_flavors(description):
     text = html.unescape(re.sub(r"<[^>]+>", " ", description or "")).strip()[:2000]
     if not text:
         return []
-    r = requests.post("https://api.openai.com/v1/chat/completions",
+    r = _openai_post("https://api.openai.com/v1/chat/completions",
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
         data=json.dumps({"model": OPENAI_TEXT_MODEL, "temperature": 0.3,
                          "messages": [{"role": "system", "content": FLAVOR_SYS},
                                       {"role": "user", "content": text}]}), timeout=60)
-    r.raise_for_status()
     content = r.json()["choices"][0]["message"]["content"]
     return [f.strip(" .") for f in content.replace("\n", ",").split(",") if f.strip(" .")][:8]
 
@@ -163,10 +179,8 @@ def generate_flavor_image(canvas_png, mask_png, flavors):
             "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": "1"}
     if "mini" not in OPENAI_IMAGE_MODEL:
         data["input_fidelity"] = "high"
-    r = requests.post("https://api.openai.com/v1/images/edits",
+    r = _openai_post("https://api.openai.com/v1/images/edits",
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}, data=data, files=files, timeout=300)
-    if r.status_code >= 400:
-        raise RuntimeError(f"OpenAI {r.status_code}: {r.text[:300]}")
     return base64.b64decode(r.json()["data"][0]["b64_json"])
 
 
