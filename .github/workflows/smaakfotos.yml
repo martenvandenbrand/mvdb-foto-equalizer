@@ -19,7 +19,7 @@ on:
       image_model:
         description: "Beeldmodel"
         type: choice
-        options: ["gpt-image-1.5", "gpt-image-1-mini"]
+        options: ["gpt-image-1.5", "gpt-image-1-mini", "gpt-image-2"]
         default: "gpt-image-1.5"
       image_quality:
         description: "Kwaliteit"
@@ -52,9 +52,9 @@ jobs:
       - name: Installeer dependencies
         run: pip install -r requirements.txt
 
-      # Alleen nodig voor stock-modus (echte foto's + achtergrond weg)
-      - name: Installeer rembg (stock-modus)
-        if: ${{ inputs.cutout_source == 'stock' }}
+      # Nodig voor stock-modus én voor gpt-image-2 (achtergrond wegknippen)
+      - name: Installeer rembg
+        if: ${{ inputs.cutout_source == 'stock' || inputs.image_model == 'gpt-image-2' }}
         run: pip install rembg onnxruntime
 
       # Hergebruikt smaak-uitsnedes tussen runs -> unieke smaken maar 1x betalen
