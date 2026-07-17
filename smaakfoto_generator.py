@@ -50,6 +50,7 @@ DONE_TAG       = env("DONE_TAG", "smaakfoto")
 DRY_RUN        = env_bool("DRY_RUN", True)       # genereert wel (OpenAI-kosten), upload/tagt niet
 BACKUP_DIR     = pathlib.Path("backup_smaak")
 CACHE_DIR      = pathlib.Path("flavor_cache")    # hergebruikte smaak-uitsnedes
+META_DIR       = pathlib.Path("flavor_meta")     # gecachete smaak-extractie per product-handle
 # ======================================================================================
 
 API_URL   = f"https://{SHOP}/admin/api/{API_VERSION}/graphql.json"
@@ -160,7 +161,20 @@ FLAVOR_SYS = (
     "elementen. Maximaal 5 primair en 5 secundair."
 )
 
-def extract_flavors(description):
+def extract_flavors(handle, description):
+    """Smaken per product; gecachet in de repo (flavor_meta/<handle>.json) -> rerun = geen tekst-call."""
+    META_DIR.mkdir(exist_ok=True)
+    fp = META_DIR / f"{_slug(handle)}.json"
+    if fp.exists() and not BYPASS_CACHE:
+        data = json.loads(fp.read_text(encoding="utf-8"))
+        return data.get("primair", []), data.get("secundair", [])
+    prim, sec = _extract_flavors_api(description)
+    if prim or sec:
+        fp.write_text(json.dumps({"primair": prim, "secundair": sec}, ensure_ascii=False, indent=2),
+                      encoding="utf-8")
+    return prim, sec
+
+def _extract_flavors_api(description):
     text = html.unescape(re.sub(r"<[^>]+>", " ", description or "")).strip()[:2000]
     if not text:
         return [], []
@@ -344,7 +358,7 @@ def main():
     done = failed = 0
     for p in products:
         try:
-            prim, sec = extract_flavors(p.get("description"))
+            prim, sec = extract_flavors(p["handle"], p.get("description"))
             if not prim and not sec:
                 print(f"[skip] {p['handle']}: geen smaken in beschrijving"); continue
             prim, sec = _balance(prim, sec)
