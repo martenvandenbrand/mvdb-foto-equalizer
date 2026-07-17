@@ -29,7 +29,7 @@ on:
       flavor_size:
         description: "Grootte van de smaken in px (subtiliteit)"
         type: choice
-        options: ["220", "260", "320"]
+        options: ["220", "260", "320", "400", "480", "560"]
         default: "260"
       cutout_source:
         description: "Bron van de smaakbeelden"
