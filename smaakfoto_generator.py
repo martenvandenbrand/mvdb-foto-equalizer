@@ -272,10 +272,13 @@ def _fit(im, box):
     im = _trim(im); w, h = im.size; s = box / max(w, h)
     return im.resize((max(1, round(w*s)), max(1, round(h*s))), Image.LANCZOS)
 
-def _drop_shadow(cut, blur=16, opacity=95):
-    sh = Image.new("RGBA", cut.size, (0, 0, 0, 0))
-    sh.paste(Image.new("RGBA", cut.size, (0, 0, 0, opacity)), (0, 0), cut.getchannel("A"))
-    return sh.filter(ImageFilter.GaussianBlur(blur))
+def _drop_shadow(cut, blur=18, opacity=90, offset=(10, 22)):
+    w, h = cut.size
+    pad = blur * 3 + max(abs(offset[0]), abs(offset[1]))     # ruimte zodat blur/offset niet afkappen
+    sh = Image.new("RGBA", (w + 2 * pad, h + 2 * pad), (0, 0, 0, 0))
+    sh.paste(Image.new("RGBA", (w, h), (0, 0, 0, opacity)),
+             (pad + offset[0], pad + offset[1]), cut.getchannel("A"))
+    return sh.filter(ImageFilter.GaussianBlur(blur)), pad
 
 def _by_type(items):
     return sorted(items, key=lambda x: x.get("type", "zzz"))   # gelijke types bij elkaar
@@ -295,7 +298,8 @@ def _place_column(cv, items, cx, seed):
         cy = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.10, band * 0.10))
         x = int(cx + rnd.uniform(-N * 0.028, N * 0.028)) - cut.width // 2
         y = cy - cut.height // 2
-        cv.alpha_composite(_drop_shadow(cut), (x + 9, y + 20))
+        sh, pad = _drop_shadow(cut)
+        cv.alpha_composite(sh, (x - pad, y - pad))
         cv.alpha_composite(cut, (x, y))
 
 def compose(bottle_img, prim, sec, seed=0):
