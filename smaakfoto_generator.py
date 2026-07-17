@@ -36,6 +36,7 @@ IMAGE_QUALITY      = env("IMAGE_QUALITY", "high")                 # low | medium
 
 CUTOUT_SOURCE  = env("CUTOUT_SOURCE", "gpt")     # gpt = genereren | stock = echte foto's (Pexels) + achtergrond weg
 PEXELS_API_KEY = env("PEXELS_API_KEY", "")       # alleen nodig bij CUTOUT_SOURCE=stock
+BYPASS_CACHE   = env_bool("BYPASS_CACHE", False)  # True = cache negeren en verse uitsnede maken (ook bij gpt)
 
 FINAL_SIZE     = env_int("FINAL_SIZE", 2048)     # canvas (vierkant)
 BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
@@ -181,14 +182,17 @@ def extract_flavors(description):
 def _slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "smaak"
 
+_fresh = set()   # smaken die deze run al opnieuw zijn gemaakt (voorkomt dubbel werk bij BYPASS_CACHE)
+
 def get_flavor_cutout(naam, typ):
-    """Transparante uitsnede per smaak; gecachet per naam. Bron: GPT of echte stockfoto."""
+    """Transparante uitsnede per smaak; gecachet per naam+bron. Bron: GPT of echte stockfoto."""
     CACHE_DIR.mkdir(exist_ok=True)
-    fp = CACHE_DIR / f"{_slug(naam)}.png"
-    if fp.exists():
+    key = f"{_slug(naam)}-{CUTOUT_SOURCE}"
+    fp = CACHE_DIR / f"{key}.png"
+    if fp.exists() and (not BYPASS_CACHE or key in _fresh):
         return Image.open(fp).convert("RGBA")
     img = _stock_cutout(naam) if CUTOUT_SOURCE == "stock" else _gpt_cutout(naam, typ)
-    img.save(fp)
+    img.save(fp); _fresh.add(key)
     return img
 
 def _gpt_cutout(naam, typ):
