@@ -41,3 +41,30 @@ Actions-tabblad → **Normaliseer flesfoto's** → **Run workflow**. Knoppen:
 **Aanbevolen volgorde:** eerst met `dry_run` aan draaien, het artifact downloaden en
 controleren, daarna opnieuw met `dry_run` uit. Laat `delete_original` bij de eerste
 live-run uit; de nieuwe foto komt vooraan te staan en de originele blijft als vangnet.
+
+---
+
+## Tweede action: smaakfoto's genereren
+
+`smaakfoto_generator.py` + workflow **Genereer smaakfoto's**. Neemt per wijn de
+hoofdfoto, haalt de smaken uit de productbeschrijving en genereert met OpenAI
+GPT Image een afbeelding met die smaken rondom de fles. De échte fles wordt er
+na het genereren weer overheen gecomposit, zodat het etiket scherp en onvervormd
+blijft. Het resultaat komt als tweede productfoto terug in Shopify.
+
+**Extra secret:** `OPENAI_API_KEY` (uit platform.openai.com). Je organisatie moet
+mogelijk eerst geverifieerd zijn in de OpenAI-console om GPT Image te mogen gebruiken.
+
+### Kostenbeheersing
+- **`batch_size`** (1 of 10): hoeveel flessen deze run. Zo houd je de kosten per run in de hand.
+- **`handle`**: draai exact 1 gekozen fles (bv. `vignoble-nicolas-therez-cuvee-serres-moi-2024`) om te testen.
+- Verwerkte producten krijgen de tag `smaakfoto`; volgende runs slaan die automatisch over, dus je betaalt nooit dubbel.
+- **`image_model`** / **`image_quality`**: `gpt-image-1-mini` + `low` is het goedkoopst (~$0,005–0,01 per foto), `gpt-image-1.5` + `high` het mooist (tot ~$0,20). Edits met een referentiefoto tellen ook wat input-tokens mee.
+
+> Let op: `dry_run` genereert wél de beelden (dus OpenAI-kosten) en levert ze als
+> artifact `smaakfotos`, maar uploadt en tagt niet. Handig om eerst het resultaat
+> te beoordelen; zet daarna `dry_run` uit voor dezelfde flessen.
+
+### Aanbevolen eerste run
+Zet `handle` op één wijn, `dry_run` aan. Beoordeel het artifact. Klopt het? Draai
+dezelfde `handle` met `dry_run` uit. Daarna in batches van 10 door de rest.
