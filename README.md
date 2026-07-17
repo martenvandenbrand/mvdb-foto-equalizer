@@ -68,3 +68,11 @@ mogelijk eerst geverifieerd zijn in de OpenAI-console om GPT Image te mogen gebr
 ### Aanbevolen eerste run
 Zet `handle` op één wijn, `dry_run` aan. Beoordeel het artifact. Klopt het? Draai
 dezelfde `handle` met `dry_run` uit. Daarna in batches van 10 door de rest.
+
+### Stijl en indeling fijnafstemmen
+De smaken worden nu als **fotorealistische** packshots gevraagd (geen tekeningen)
+en links/rechts van de fles geplaatst, geclusterd op type en op primair (links) /
+secundair (rechts). Knoppen om bij te sturen:
+- **`image_quality: high`** geeft het meest fotografische resultaat (aanrader nu de stijl belangrijk is).
+- **`SIDE_WIDTH`** (env, standaard 0.32): breedte van de zijkolommen. Hoger = meer ruimte voor de smaken, smaller middenkanaal voor de fles.
+- **`BOTTLE_FRACTION`** (env, standaard 0.72): hoe groot de fles op het canvas staat.
