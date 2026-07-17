@@ -31,6 +31,11 @@ on:
         type: choice
         options: ["220", "260", "320"]
         default: "260"
+      cutout_source:
+        description: "Bron van de smaakbeelden"
+        type: choice
+        options: ["gpt", "stock"]
+        default: "gpt"
 
 jobs:
   smaakfotos:
@@ -42,6 +47,11 @@ jobs:
           python-version: "3.12"
       - name: Installeer dependencies
         run: pip install -r requirements.txt
+
+      # Alleen nodig voor stock-modus (echte foto's + achtergrond weg)
+      - name: Installeer rembg (stock-modus)
+        if: ${{ inputs.cutout_source == 'stock' }}
+        run: pip install rembg onnxruntime
 
       # Hergebruikt smaak-uitsnedes tussen runs -> unieke smaken maar 1x betalen
       - name: Cache smaak-uitsnedes
@@ -63,6 +73,8 @@ jobs:
           OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
           IMAGE_QUALITY: ${{ inputs.image_quality }}
           FLAVOR_PX: ${{ inputs.flavor_size }}
+          CUTOUT_SOURCE: ${{ inputs.cutout_source }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: python smaakfoto_generator.py
 
       - name: Gegenereerde foto's als artifact
