@@ -16,8 +16,8 @@ Kostenbeheersing: BATCH_SIZE (1/10), HANDLE (1 fles), DONE_TAG (nooit dubbel),
 en de cache. Verwerkte producten krijgen DONE_TAG.
 """
 
-import os, io, sys, json, time, base64, html, re, pathlib, requests
-from PIL import Image
+import os, io, sys, json, time, base64, html, re, pathlib, random, zlib, requests
+from PIL import Image, ImageFilter
 
 def env(k, d=""):   return os.environ.get(k, d)
 def env_bool(k, d): return os.environ.get(k, str(d)).strip().lower() in ("1", "true", "yes", "ja")
@@ -210,19 +210,39 @@ def _fit(im, box):
     im = _trim(im); w, h = im.size; s = box / max(w, h)
     return im.resize((max(1, round(w*s)), max(1, round(h*s))), Image.LANCZOS)
 
-def compose(bottle_img, prim, sec):
+def _drop_shadow(cut, blur=16, opacity=95):
+    sh = Image.new("RGBA", cut.size, (0, 0, 0, 0))
+    sh.paste(Image.new("RGBA", cut.size, (0, 0, 0, opacity)), (0, 0), cut.getchannel("A"))
+    return sh.filter(ImageFilter.GaussianBlur(blur))
+
+def _by_type(items):
+    return sorted(items, key=lambda x: x.get("type", "zzz"))   # gelijke types bij elkaar
+
+def _place_column(cv, items, cx, seed):
+    """Organische kolom: wisselende grootte, lichte rotatie/jitter, contactschaduw."""
+    if not items:
+        return
+    rnd = random.Random(seed)
+    N = cv.size[1]
+    top, bottom = int(N * 0.07), int(N * 0.93)
+    band = (bottom - top) / len(items)
+    for i, it in enumerate(_by_type(items)):
+        size = int(FLAVOR_PX * rnd.uniform(0.82, 1.18))
+        cut = _fit(get_flavor_cutout(it["naam"], it.get("type", "")), size)
+        cut = cut.rotate(rnd.uniform(-11, 11), expand=True, resample=Image.BICUBIC)
+        cy = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.10, band * 0.10))
+        x = int(cx + rnd.uniform(-N * 0.028, N * 0.028)) - cut.width // 2
+        y = cy - cut.height // 2
+        cv.alpha_composite(_drop_shadow(cut), (x + 9, y + 20))
+        cv.alpha_composite(cut, (x, y))
+
+def compose(bottle_img, prim, sec, seed=0):
     N = FINAL_SIZE
     cv = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    max_n = max(len(prim), len(sec), 1)
-    top, bottom = int(N * 0.06), int(N * 0.94)
-    step = (bottom - top) / max_n
-    rows = [int(top + step * (i + 0.5)) for i in range(max_n)]   # zelfde rijhoogtes links & rechts
     cxL, cxR = int(COL_MARGIN * N), int((1 - COL_MARGIN) * N)
-    for items, cx in [(prim, cxL), (sec, cxR)]:
-        for it, cy in zip(items, rows):
-            cut = _fit(get_flavor_cutout(it["naam"], it.get("type", "")), FLAVOR_PX)
-            cv.alpha_composite(cut, (cx - cut.width // 2, cy - cut.height // 2))
-    b = _trim(bottle_img); w, h = b.size
+    _place_column(cv, prim, cxL, seed)         # primair links
+    _place_column(cv, sec, cxR, seed + 1)      # secundair rechts
+    b = _trim(bottle_img); w, h = b.size        # echte fles bovenop, exact BOTTLE_PX hoog
     nw = max(1, round(w * BOTTLE_PX / h))
     b = b.resize((nw, BOTTLE_PX), Image.LANCZOS)
     cv.alpha_composite(b, ((N - nw) // 2, (N - BOTTLE_PX) // 2))
@@ -252,7 +272,7 @@ def main():
             if not prim and not sec:
                 print(f"[skip] {p['handle']}: geen smaken in beschrijving"); continue
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
-            final = compose(Image.open(io.BytesIO(raw)), prim, sec)
+            final = compose(Image.open(io.BytesIO(raw)), prim, sec, seed=zlib.crc32(p["handle"].encode()))
             final.save(BACKUP_DIR / f"{p['handle']}-smaak.png", "PNG", optimize=True)
             names = lambda xs: ", ".join(x["naam"] for x in xs) or "-"
             print(f"[{'dry' if DRY_RUN else 'ok'}] {p['handle']}  | links: {names(prim)}  | rechts: {names(sec)}")

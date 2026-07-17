@@ -46,11 +46,14 @@ live-run uit; de nieuwe foto komt vooraan te staan en de originele blijft als va
 
 ## Tweede action: smaakfoto's genereren
 
-`smaakfoto_generator.py` + workflow **Genereer smaakfoto's**. Neemt per wijn de
-hoofdfoto, haalt de smaken uit de productbeschrijving en genereert met OpenAI
-GPT Image een afbeelding met die smaken rondom de fles. De échte fles wordt er
-na het genereren weer overheen gecomposit, zodat het etiket scherp en onvervormd
-blijft. Het resultaat komt als tweede productfoto terug in Shopify.
+`smaakfoto_generator.py` + workflow **Genereer smaakfoto's**. Per wijn worden de
+smaken uit de productbeschrijving gehaald; elke smaak wordt los als fotorealistische
+uitsnede (transparant) gegenereerd met OpenAI GPT Image en daarna deterministisch
+naast de fles geplaatst: primair links, secundair rechts, organisch geclusterd per
+type met wisselende groottes, lichte rotatie en een zachte contactschaduw voor diepte. De fles staat exact `BOTTLE_PX` (2000) hoog op een 2048x2048
+canvas, scherp uit het originele bestand. Elke unieke smaak wordt gecacht en
+hergebruikt, dus je betaalt per smaak maar één keer. Het resultaat komt als tweede
+productfoto terug in Shopify.
 
 **Extra secret:** `OPENAI_API_KEY` (uit platform.openai.com). Je organisatie moet
 mogelijk eerst geverifieerd zijn in de OpenAI-console om GPT Image te mogen gebruiken.
@@ -70,9 +73,9 @@ Zet `handle` op één wijn, `dry_run` aan. Beoordeel het artifact. Klopt het? Dr
 dezelfde `handle` met `dry_run` uit. Daarna in batches van 10 door de rest.
 
 ### Stijl en indeling fijnafstemmen
-De smaken worden nu als **fotorealistische** packshots gevraagd (geen tekeningen)
-en links/rechts van de fles geplaatst, geclusterd op type en op primair (links) /
-secundair (rechts). Knoppen om bij te sturen:
-- **`image_quality: high`** geeft het meest fotografische resultaat (aanrader nu de stijl belangrijk is).
-- **`SIDE_WIDTH`** (env, standaard 0.32): breedte van de zijkolommen. Hoger = meer ruimte voor de smaken, smaller middenkanaal voor de fles.
-- **`BOTTLE_FRACTION`** (env, standaard 0.72): hoe groot de fles op het canvas staat.
+- **`flavor_size`** (220/260/320 px): grootte van de smaken. Kleiner = subtieler.
+- **`image_quality: high`** geeft de meest fotografische uitsnedes.
+- **`BOTTLE_PX`** (env, standaard 2000) en **`FINAL_SIZE`** (2048): flesgrootte en canvas.
+- **`COL_MARGIN`** (env, 0.16): hoe ver de kolommen van het midden staan.
+- De cache staat in `flavor_cache/`. Bevalt een specifieke smaak niet? Verwijder dat
+  ene bestand (of maak de cache leeg) en draai opnieuw; alleen die wordt opnieuw gemaakt.
