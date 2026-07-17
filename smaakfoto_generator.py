@@ -34,6 +34,9 @@ OPENAI_IMAGE_MODEL = env("OPENAI_IMAGE_MODEL", "gpt-image-1.5")   # of "gpt-imag
 OPENAI_TEXT_MODEL  = env("OPENAI_TEXT_MODEL", "gpt-4o-mini")
 IMAGE_QUALITY      = env("IMAGE_QUALITY", "high")                 # low | medium | high
 
+CUTOUT_SOURCE  = env("CUTOUT_SOURCE", "gpt")     # gpt = genereren | stock = echte foto's (Pexels) + achtergrond weg
+PEXELS_API_KEY = env("PEXELS_API_KEY", "")       # alleen nodig bij CUTOUT_SOURCE=stock
+
 FINAL_SIZE     = env_int("FINAL_SIZE", 2048)     # canvas (vierkant)
 BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
 FLAVOR_PX      = env_int("FLAVOR_PX", 260)       # max grootte van een smaak-uitsnede (subtiliteit)
@@ -179,25 +182,50 @@ def _slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "smaak"
 
 def get_flavor_cutout(naam, typ):
-    """Fotorealistische uitsnede op transparante achtergrond; gecachet per smaaknaam."""
+    """Transparante uitsnede per smaak; gecachet per naam. Bron: GPT of echte stockfoto."""
     CACHE_DIR.mkdir(exist_ok=True)
     fp = CACHE_DIR / f"{_slug(naam)}.png"
     if fp.exists():
         return Image.open(fp).convert("RGBA")
+    img = _stock_cutout(naam) if CUTOUT_SOURCE == "stock" else _gpt_cutout(naam, typ)
+    img.save(fp)
+    return img
+
+def _gpt_cutout(naam, typ):
     prompt = (
-        f"Een enkele, FOTOREALISTISCHE studio-packshot van {naam} ({typ}), los gefotografeerd en "
-        "gecentreerd in beeld, op een VOLLEDIG TRANSPARANTE achtergrond. Echte productfotografie met "
-        "natuurlijke texturen, realistische kleuren en een zachte slagschaduw. ABSOLUUT GEEN illustratie, "
-        "tekening, 3D-render of cartoon. Geen tekst, geen verpakking, geen andere objecten."
+        f"Een professionele macro-productfoto van {naam} ({typ}), geschoten met een DSLR en macro-objectief, "
+        "zacht daglicht, ondiepe scherptediepte. ECHTE voedselfotografie: natuurlijke textuur, poriën, glans, "
+        "kleine onregelmatigheden en realistische kleur, precies zoals een echte foto. Eén los object, "
+        "gecentreerd, op een VOLLEDIG TRANSPARANTE achtergrond, met een subtiele natuurlijke schaduw. "
+        "GEEN 3D-render, GEEN CGI, GEEN illustratie, GEEN klei of was, GEEN cartoon, GEEN glad plastic "
+        "uiterlijk, GEEN tekst, GEEN verpakking."
     )
     body = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1024",
             "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": 1}
     r = _openai_post("https://api.openai.com/v1/images/generations",
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
         data=json.dumps(body), timeout=300)
-    img = Image.open(io.BytesIO(base64.b64decode(r.json()["data"][0]["b64_json"]))).convert("RGBA")
-    img.save(fp)
-    return img
+    return Image.open(io.BytesIO(base64.b64decode(r.json()["data"][0]["b64_json"]))).convert("RGBA")
+
+def _stock_cutout(naam):
+    """Echte foto van Pexels ophalen en de achtergrond wegknippen (rembg) -> transparant."""
+    if not PEXELS_API_KEY:
+        raise RuntimeError("CUTOUT_SOURCE=stock vereist PEXELS_API_KEY (gratis via pexels.com/api).")
+    r = requests.get("https://api.pexels.com/v1/search",
+        headers={"Authorization": PEXELS_API_KEY},
+        params={"query": f"{naam} isolated on white background", "per_page": 1,
+                "orientation": "square"}, timeout=30)
+    r.raise_for_status()
+    photos = r.json().get("photos", [])
+    if not photos:
+        raise RuntimeError(f"geen stockfoto gevonden voor '{naam}'")
+    src = photos[0]["src"]
+    raw = requests.get(src.get("large2x") or src.get("large") or src["original"], timeout=30).content
+    try:
+        from rembg import remove
+    except ImportError:
+        raise RuntimeError("CUTOUT_SOURCE=stock vereist rembg (pip install rembg onnxruntime).")
+    return remove(Image.open(io.BytesIO(raw)).convert("RGBA")).convert("RGBA")
 
 
 # ------------------------- Compositie -------------------------
