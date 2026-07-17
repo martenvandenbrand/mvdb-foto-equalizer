@@ -1,30 +1,27 @@
 #!/usr/bin/env python3
 """
-Koper & Karaf - Smaakfoto-generator
-===================================
-Neemt per wijn de hoofdfoto (transparante fles) en genereert een nieuwe
-afbeelding met de smaken/aroma's uit de productbeschrijving rondom de fles.
+Koper & Karaf - Smaakfoto-generator (deterministische compositie)
+=================================================================
+Per wijn: smaken uit de beschrijving halen, elke smaak los als fotorealistische
+uitsnede (transparant) genereren met GPT Image, en die daarna zelf exact
+uitgelijnd naast de fles plaatsen.
 
-Werkwijze:
-  1. Smaken uit de beschrijving halen met een goedkoop OpenAI-tekstmodel.
-  2. Fles centraal op een canvas + masker (midden beschermd).
-  3. GPT Image tekent de smaken rondom de fles (transparante achtergrond).
-  4. De ECHTE fles wordt er weer overheen gecomposit -> etiket blijft perfect.
-  5. Resultaat als extra productfoto terug in Shopify, product krijgt een tag.
+  - Fles: exact BOTTLE_PX hoog op een FINAL_SIZE x FINAL_SIZE canvas, scherp uit
+    het originele bestand (niet opgeschaald).
+  - Smaken: primair links, secundair rechts, per type geclusterd, op gelijke
+    rijhoogtes links/rechts, met instelbare grootte (subtiliteit).
+  - Cache: elke unieke smaak wordt 1x gegenereerd en hergebruikt -> lage kosten.
 
-Kostenbeheersing:
-  - BATCH_SIZE (1 of 10) begrenst het aantal flessen per run.
-  - HANDLE draait exact 1 gekozen fles (voor een testje).
-  - Verwerkte producten krijgen DONE_TAG; volgende runs slaan die over,
-    zodat je nooit dubbel betaalt.
+Kostenbeheersing: BATCH_SIZE (1/10), HANDLE (1 fles), DONE_TAG (nooit dubbel),
+en de cache. Verwerkte producten krijgen DONE_TAG.
 """
 
 import os, io, sys, json, time, base64, html, re, pathlib, requests
-from PIL import Image, ImageFilter
+from PIL import Image
 
-def env(k, d=""):       return os.environ.get(k, d)
-def env_bool(k, d):     return os.environ.get(k, str(d)).strip().lower() in ("1", "true", "yes", "ja")
-def env_int(k, d):      return int(os.environ.get(k, d))
+def env(k, d=""):   return os.environ.get(k, d)
+def env_bool(k, d): return os.environ.get(k, str(d)).strip().lower() in ("1", "true", "yes", "ja")
+def env_int(k, d):  return int(os.environ.get(k, d))
 
 # ======================= CONFIGURATIE (via env / Action-inputs) =======================
 SHOP           = env("SHOP", "jouwwinkel.myshopify.com")
@@ -32,21 +29,22 @@ CLIENT_ID      = env("SHOPIFY_CLIENT_ID", "")
 CLIENT_SECRET  = env("SHOPIFY_CLIENT_SECRET", "")
 API_VERSION    = env("API_VERSION", "2026-01")
 
-OPENAI_API_KEY   = env("OPENAI_API_KEY", "")
+OPENAI_API_KEY     = env("OPENAI_API_KEY", "")
 OPENAI_IMAGE_MODEL = env("OPENAI_IMAGE_MODEL", "gpt-image-1.5")   # of "gpt-image-1-mini" (goedkoper)
 OPENAI_TEXT_MODEL  = env("OPENAI_TEXT_MODEL", "gpt-4o-mini")
-IMAGE_QUALITY    = env("IMAGE_QUALITY", "medium")                 # low | medium | high
-IMAGE_SIZE       = env("IMAGE_SIZE", "1024x1024")                 # generatieformaat
-FINAL_SIZE       = env_int("FINAL_SIZE", 2048)                    # eindformaat voor de webshop
-BOTTLE_FRACTION  = float(env("BOTTLE_FRACTION", "0.72"))          # fleshoogte t.o.v. canvas
-SIDE_WIDTH       = float(env("SIDE_WIDTH", "0.32"))               # breedte van elke zijkolom (smaken links/rechts)
+IMAGE_QUALITY      = env("IMAGE_QUALITY", "high")                 # low | medium | high
 
-BATCH_SIZE     = env_int("BATCH_SIZE", 1)      # aantal flessen per run (1 of 10)
-HANDLE         = env("HANDLE", "")             # 1 specifieke fles (URL-slug); leeg = automatische selectie
-DONE_TAG       = env("DONE_TAG", "smaakfoto")  # tag die verwerkte producten krijgen
-USE_MASK       = env_bool("USE_MASK", True)
-DRY_RUN        = env_bool("DRY_RUN", True)     # let op: genereert wel (kost OpenAI-credits), maar upload/tagt niet
+FINAL_SIZE     = env_int("FINAL_SIZE", 2048)     # canvas (vierkant)
+BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
+FLAVOR_PX      = env_int("FLAVOR_PX", 260)       # max grootte van een smaak-uitsnede (subtiliteit)
+COL_MARGIN     = float(env("COL_MARGIN", "0.16"))# kolomcenter t.o.v. canvasbreedte (links/rechts)
+
+BATCH_SIZE     = env_int("BATCH_SIZE", 1)
+HANDLE         = env("HANDLE", "")
+DONE_TAG       = env("DONE_TAG", "smaakfoto")
+DRY_RUN        = env_bool("DRY_RUN", True)       # genereert wel (OpenAI-kosten), upload/tagt niet
 BACKUP_DIR     = pathlib.Path("backup_smaak")
+CACHE_DIR      = pathlib.Path("flavor_cache")    # hergebruikte smaak-uitsnedes
 # ======================================================================================
 
 API_URL   = f"https://{SHOP}/admin/api/{API_VERSION}/graphql.json"
@@ -85,9 +83,9 @@ query($n: Int!, $q: String) {
 
 def select_products():
     if HANDLE:
-        q = f"handle:{HANDLE}"; n = 1
+        q, n = f"handle:{HANDLE}", 1
     else:
-        q = f"-tag:{DONE_TAG}"; n = BATCH_SIZE
+        q, n = f"-tag:{DONE_TAG}", BATCH_SIZE
     nodes = gql(SELECT_Q, {"n": n, "q": q})["products"]["nodes"]
     return [p for p in nodes if p.get("featuredImage") and p["featuredImage"].get("url")]
 
@@ -127,23 +125,12 @@ def upload_and_attach(product_id, png_bytes, handle):
     if d["productCreateMedia"]["mediaUserErrors"]:
         raise RuntimeError(d["productCreateMedia"]["mediaUserErrors"])
     new_id = d["productCreateMedia"]["media"][0]["id"]
-    gql(REORDER_M, {"id": product_id, "moves": [{"id": new_id, "newPosition": "1"}]})  # als 2e foto
+    gql(REORDER_M, {"id": product_id, "moves": [{"id": new_id, "newPosition": "1"}]})
     gql(TAG_M, {"id": product_id, "tags": [DONE_TAG]})
 
 
 # ------------------------- OpenAI -------------------------
-FLAVOR_SYS = (
-    "Je bent sommelier. Analyseer de wijnbeschrijving en geef UITSLUITEND geldige JSON, geen uitleg, "
-    "geen code-fences, in exact deze vorm:\n"
-    '{"primair":[{"naam":"citroen","type":"fruit"}],"secundair":[{"naam":"vanille","type":"bloem"}]}\n'
-    "Regels: 'primair' = aroma's uit de druif zelf (fruit, bloemen, citrus). 'secundair' = aroma's uit "
-    "vinificatie/rijping (hout, vanille, brioche, boter, room, noten, toast). 'type' is een korte "
-    "categorie zoals fruit, citrus, bloem, noot, hout, zuivel, kruid. Alleen concrete, fotografeerbare "
-    "elementen. Maximaal 7 items totaal, evenwichtig verdeeld waar mogelijk."
-)
-
 def _openai_post(url, tries=5, **kwargs):
-    """POST met backoff op tijdelijke 429/5xx en heldere foutmeldingen."""
     r = None
     for attempt in range(tries):
         r = requests.post(url, **kwargs)
@@ -152,15 +139,23 @@ def _openai_post(url, tries=5, **kwargs):
         body = r.text
         if r.status_code == 429 and "insufficient_quota" in body:
             raise RuntimeError("OpenAI weigert: geen tegoed/quota op deze API-sleutel. Stel billing in "
-                               "en zet credits klaar in de OpenAI-console (en verifieer je organisatie "
-                               "voor GPT Image).")
+                               "en zet credits klaar in de OpenAI-console (en verifieer je organisatie).")
         if r.status_code == 429 or r.status_code >= 500:
             time.sleep(float(r.headers.get("retry-after", 2 * (attempt + 1)))); continue
         raise RuntimeError(f"OpenAI {r.status_code}: {body[:400]}")
     raise RuntimeError(f"OpenAI bleef {r.status_code} geven na {tries} pogingen: {r.text[:300]}")
 
+FLAVOR_SYS = (
+    "Je bent sommelier. Analyseer de wijnbeschrijving en geef UITSLUITEND geldige JSON, geen uitleg, "
+    "geen code-fences, in exact deze vorm:\n"
+    '{"primair":[{"naam":"citroen","type":"fruit"}],"secundair":[{"naam":"vanille","type":"bloem"}]}\n'
+    "Regels: 'primair' = aroma's uit de druif zelf (fruit, bloemen, citrus). 'secundair' = aroma's uit "
+    "vinificatie/rijping (hout, vanille, brioche, boter, room, noten, toast). 'type' is een korte "
+    "categorie (fruit, citrus, bloem, noot, hout, zuivel, kruid). Alleen concrete, fotografeerbare "
+    "elementen. Maximaal 5 primair en 5 secundair."
+)
+
 def extract_flavors(description):
-    """Geeft (primair, secundair): elk een lijst van {'naam','type'}."""
     text = html.unescape(re.sub(r"<[^>]+>", " ", description or "")).strip()[:2000]
     if not text:
         return [], []
@@ -170,83 +165,68 @@ def extract_flavors(description):
                          "response_format": {"type": "json_object"},
                          "messages": [{"role": "system", "content": FLAVOR_SYS},
                                       {"role": "user", "content": text}]}), timeout=60)
-    content = r.json()["choices"][0]["message"]["content"]
-    content = re.sub(r"^```(?:json)?|```$", "", content.strip()).strip()
+    content = re.sub(r"^```(?:json)?|```$", "", r.json()["choices"][0]["message"]["content"].strip()).strip()
     try:
         data = json.loads(content)
-        prim = [x for x in data.get("primair", []) if x.get("naam")]
-        sec  = [x for x in data.get("secundair", []) if x.get("naam")]
+        prim = [x for x in data.get("primair", []) if x.get("naam")][:5]
+        sec  = [x for x in data.get("secundair", []) if x.get("naam")][:5]
     except Exception:
-        # terugval: platte woordenlijst, in tweeën gesplitst
-        words = [{"naam": w.strip(" ."), "type": "overig"}
-                 for w in re.split(r"[,\n]", content) if w.strip(" .")][:7]
-        prim, sec = words[: (len(words) + 1) // 2], words[(len(words) + 1) // 2:]
-    return prim[:5], sec[:5]
+        words = [{"naam": w.strip(" ."), "type": "overig"} for w in re.split(r"[,\n]", content) if w.strip(" .")][:6]
+        prim, sec = words[: (len(words)+1)//2], words[(len(words)+1)//2:]
+    return prim, sec
 
-def _cluster_text(items):
-    """Groepeer items per type: 'citroen en sinaasappel (citrus); walnoot (noot)'."""
-    groups = {}
-    for it in items:
-        groups.setdefault(it.get("type", "overig"), []).append(it.get("naam", ""))
-    return "; ".join(f"{' en '.join(v)} ({t})" for t, v in groups.items())
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "smaak"
 
-def generate_flavor_image(canvas_png, mask_png, primair, secundair):
-    links = _cluster_text(primair) or "geen"
-    rechts = _cluster_text(secundair) or "geen"
+def get_flavor_cutout(naam, typ):
+    """Fotorealistische uitsnede op transparante achtergrond; gecachet per smaaknaam."""
+    CACHE_DIR.mkdir(exist_ok=True)
+    fp = CACHE_DIR / f"{_slug(naam)}.png"
+    if fp.exists():
+        return Image.open(fp).convert("RGBA")
     prompt = (
-        "Een set losse, FOTOREALISTISCHE productfoto's van voedingsmiddelen op een volledig transparante "
-        "achtergrond, in de stijl van professionele studio-packshots: echte fotografie met natuurlijke "
-        "texturen, scherpe details, realistische kleuren en een zachte natuurlijke slagschaduw. "
-        "ABSOLUUT GEEN illustraties, tekeningen, 3D-renders, klei of cartoons.\n"
-        f"Plaats aan de LINKERKANT, als één nette verticale cluster, de primaire aroma's: {links}. "
-        f"Plaats aan de RECHTERKANT, als één nette verticale cluster, de secundaire aroma's: {rechts}. "
-        "Groepeer gelijke types bij elkaar (fruit bij fruit, bloemen bij bloemen, noten bij noten). "
-        "Houd het midden volledig leeg voor de fles; teken zelf geen fles, glas of wijn. "
-        "Elk element even groot, mooi uitgelijnd, met ruimte ertussen."
+        f"Een enkele, FOTOREALISTISCHE studio-packshot van {naam} ({typ}), los gefotografeerd en "
+        "gecentreerd in beeld, op een VOLLEDIG TRANSPARANTE achtergrond. Echte productfotografie met "
+        "natuurlijke texturen, realistische kleuren en een zachte slagschaduw. ABSOLUUT GEEN illustratie, "
+        "tekening, 3D-render of cartoon. Geen tekst, geen verpakking, geen andere objecten."
     )
-    files = {"image": ("bottle.png", canvas_png, "image/png")}
-    if USE_MASK:
-        files["mask"] = ("mask.png", mask_png, "image/png")
-    data = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": IMAGE_SIZE,
-            "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": "1"}
-    if "mini" not in OPENAI_IMAGE_MODEL:
-        data["input_fidelity"] = "high"
-    r = _openai_post("https://api.openai.com/v1/images/edits",
-        headers={"Authorization": f"Bearer {OPENAI_API_KEY}"}, data=data, files=files, timeout=300)
-    return base64.b64decode(r.json()["data"][0]["b64_json"])
+    body = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1024",
+            "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": 1}
+    r = _openai_post("https://api.openai.com/v1/images/generations",
+        headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+        data=json.dumps(body), timeout=300)
+    img = Image.open(io.BytesIO(base64.b64decode(r.json()["data"][0]["b64_json"]))).convert("RGBA")
+    img.save(fp)
+    return img
 
 
-# ------------------------- Beeld: canvas, masker, terugcompositen -------------------------
-def _canvas_dim():
-    return int(IMAGE_SIZE.split("x")[0])
+# ------------------------- Compositie -------------------------
+def _trim(im):
+    im = im.convert("RGBA")
+    bb = im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()
+    return im.crop(bb) if bb else im
 
-def fit_bottle(bottle):
-    n = _canvas_dim()
-    b = bottle.convert("RGBA")
-    bbox = b.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()
-    if bbox: b = b.crop(bbox)
-    th = int(n * BOTTLE_FRACTION); w, h = b.size; nw = max(1, round(w * th / h))
-    b = b.resize((nw, th), Image.LANCZOS)
-    cv = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    cv.paste(b, ((n - nw) // 2, (n - th) // 2), b)
+def _fit(im, box):
+    im = _trim(im); w, h = im.size; s = box / max(w, h)
+    return im.resize((max(1, round(w*s)), max(1, round(h*s))), Image.LANCZOS)
+
+def compose(bottle_img, prim, sec):
+    N = FINAL_SIZE
+    cv = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    max_n = max(len(prim), len(sec), 1)
+    top, bottom = int(N * 0.06), int(N * 0.94)
+    step = (bottom - top) / max_n
+    rows = [int(top + step * (i + 0.5)) for i in range(max_n)]   # zelfde rijhoogtes links & rechts
+    cxL, cxR = int(COL_MARGIN * N), int((1 - COL_MARGIN) * N)
+    for items, cx in [(prim, cxL), (sec, cxR)]:
+        for it, cy in zip(items, rows):
+            cut = _fit(get_flavor_cutout(it["naam"], it.get("type", "")), FLAVOR_PX)
+            cv.alpha_composite(cut, (cx - cut.width // 2, cy - cut.height // 2))
+    b = _trim(bottle_img); w, h = b.size
+    nw = max(1, round(w * BOTTLE_PX / h))
+    b = b.resize((nw, BOTTLE_PX), Image.LANCZOS)
+    cv.alpha_composite(b, ((N - nw) // 2, (N - BOTTLE_PX) // 2))
     return cv
-
-def build_mask(cv):
-    """Alleen de linker- en rechterkolom bewerkbaar (transparant); midden beschermd (opaak)."""
-    n = cv.size[0]
-    side = int(SIDE_WIDTH * n)
-    mask = Image.new("RGBA", (n, n), (255, 255, 255, 255))   # alles beschermd
-    col = Image.new("RGBA", (side, n), (0, 0, 0, 0))         # bewerkbaar
-    mask.paste(col, (0, 0))                                  # linkerkolom
-    mask.paste(col, (n - side, 0))                           # rechterkolom
-    return mask
-
-def composite_back(generated, cv):
-    out = Image.open(io.BytesIO(generated)).convert("RGBA").resize(cv.size)
-    out.alpha_composite(cv)
-    if FINAL_SIZE != out.size[0]:
-        out = out.resize((FINAL_SIZE, FINAL_SIZE), Image.LANCZOS)
-    return out
 
 
 # ------------------------- Hoofdroutine -------------------------
@@ -261,9 +241,9 @@ def main():
 
     products = select_products()
     print(f"== {'DRY-RUN' if DRY_RUN else 'LIVE'} | model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) "
-          f"| {len(products)} fles(sen) deze run ==\n")
+          f"| fles {BOTTLE_PX}px op {FINAL_SIZE} | smaak {FLAVOR_PX}px | {len(products)} fles(sen) ==\n")
     if DRY_RUN:
-        print("Let op: DRY-RUN genereert wel beelden (OpenAI-kosten), maar upload/tagt niet.\n")
+        print("Let op: DRY-RUN genereert nieuwe smaken (OpenAI-kosten, maar gecacht), upload/tagt niet.\n")
 
     done = failed = 0
     for p in products:
@@ -272,17 +252,10 @@ def main():
             if not prim and not sec:
                 print(f"[skip] {p['handle']}: geen smaken in beschrijving"); continue
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
-            cv = fit_bottle(Image.open(io.BytesIO(raw)))
-            mask = build_mask(cv)
-            mbuf = io.BytesIO(); mask.save(mbuf, "PNG"); mbuf.seek(0)
-            cbuf = io.BytesIO(); cv.save(cbuf, "PNG"); cbuf.seek(0)
-
-            gen = generate_flavor_image(cbuf.getvalue(), mbuf.getvalue(), prim, sec)
-            final = composite_back(gen, cv)
+            final = compose(Image.open(io.BytesIO(raw)), prim, sec)
             final.save(BACKUP_DIR / f"{p['handle']}-smaak.png", "PNG", optimize=True)
             names = lambda xs: ", ".join(x["naam"] for x in xs) or "-"
             print(f"[{'dry' if DRY_RUN else 'ok'}] {p['handle']}  | links: {names(prim)}  | rechts: {names(sec)}")
-
             if not DRY_RUN:
                 buf = io.BytesIO(); final.save(buf, "PNG", optimize=True)
                 upload_and_attach(p["id"], buf.getvalue(), p["handle"])
@@ -291,7 +264,7 @@ def main():
             print(f"[ERR] {p.get('handle')}: {e}"); failed += 1
 
     print(f"\nKlaar. Verwerkt: {done} | fouten: {failed}")
-    print(f"Beelden staan lokaal in: {BACKUP_DIR.resolve()}")
+    print(f"Beelden in: {BACKUP_DIR.resolve()} | cache: {CACHE_DIR.resolve()}")
 
 if __name__ == "__main__":
     main()
