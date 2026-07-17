@@ -1,6 +1,5 @@
 name: Genereer smaakfoto's
 
-# Handmatig starten via de "Run workflow"-knop op het Actions-tabblad.
 on:
   workflow_dispatch:
     inputs:
@@ -10,11 +9,11 @@ on:
         options: ["1", "10"]
         default: "1"
       handle:
-        description: "1 specifieke fles (URL-slug). Ingevuld = alleen deze fles, negeert batch"
+        description: "1 specifieke fles (URL-slug). Ingevuld = alleen deze fles"
         type: string
         default: ""
       dry_run:
-        description: "Dry-run: wel genereren (kost credits) + artifact, maar niet uploaden/taggen"
+        description: "Dry-run: wel genereren (kost credits) + artifact, niet uploaden/taggen"
         type: boolean
         default: true
       image_model:
@@ -23,10 +22,15 @@ on:
         options: ["gpt-image-1.5", "gpt-image-1-mini"]
         default: "gpt-image-1.5"
       image_quality:
-        description: "Kwaliteit (hoger = duurder)"
+        description: "Kwaliteit"
         type: choice
         options: ["low", "medium", "high"]
-        default: "medium"
+        default: "high"
+      flavor_size:
+        description: "Grootte van de smaken in px (subtiliteit)"
+        type: choice
+        options: ["220", "260", "320"]
+        default: "260"
 
 jobs:
   smaakfotos:
@@ -38,6 +42,15 @@ jobs:
           python-version: "3.12"
       - name: Installeer dependencies
         run: pip install -r requirements.txt
+
+      # Hergebruikt smaak-uitsnedes tussen runs -> unieke smaken maar 1x betalen
+      - name: Cache smaak-uitsnedes
+        uses: actions/cache@v4
+        with:
+          path: flavor_cache
+          key: flavor-cache-${{ github.run_id }}
+          restore-keys: flavor-cache-
+
       - name: Genereer smaakfoto's
         env:
           SHOP: ${{ secrets.SHOP }}
@@ -49,7 +62,9 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
           IMAGE_QUALITY: ${{ inputs.image_quality }}
+          FLAVOR_PX: ${{ inputs.flavor_size }}
         run: python smaakfoto_generator.py
+
       - name: Gegenereerde foto's als artifact
         if: always()
         uses: actions/upload-artifact@v4
