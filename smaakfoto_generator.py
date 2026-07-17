@@ -180,6 +180,15 @@ def extract_flavors(description):
         prim, sec = words[: (len(words)+1)//2], words[(len(words)+1)//2:]
     return prim, sec
 
+def _balance(left, right):
+    """Herverdeel zodat |links - rechts| <= 1 (bijv. 4/1 -> 3/2), met minimale verplaatsing."""
+    left, right = list(left), list(right)
+    while len(left) - len(right) >= 2:
+        right.insert(0, left.pop())
+    while len(right) - len(left) >= 2:
+        left.append(right.pop(0))
+    return left, right
+
 def _slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "smaak"
 
@@ -338,6 +347,7 @@ def main():
             prim, sec = extract_flavors(p.get("description"))
             if not prim and not sec:
                 print(f"[skip] {p['handle']}: geen smaken in beschrijving"); continue
+            prim, sec = _balance(prim, sec)
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
             final = compose(Image.open(io.BytesIO(raw)), prim, sec, seed=zlib.crc32(p["handle"].encode()))
             final.save(BACKUP_DIR / f"{p['handle']}-smaak.png", "PNG", optimize=True)
