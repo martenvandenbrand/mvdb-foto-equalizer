@@ -17,7 +17,7 @@ en de cache. Verwerkte producten krijgen DONE_TAG.
 """
 
 import os, io, sys, json, time, base64, html, re, pathlib, random, zlib, requests
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageDraw
 
 def env(k, d=""):   return os.environ.get(k, d)
 def env_bool(k, d): return os.environ.get(k, str(d)).strip().lower() in ("1", "true", "yes", "ja")
@@ -37,6 +37,7 @@ IMAGE_QUALITY      = env("IMAGE_QUALITY", "high")                 # low | medium
 CUTOUT_SOURCE  = env("CUTOUT_SOURCE", "gpt")     # gpt = genereren | stock = echte foto's (Pexels) + achtergrond weg
 PEXELS_API_KEY = env("PEXELS_API_KEY", "")       # alleen nodig bij CUTOUT_SOURCE=stock
 BYPASS_CACHE   = env_bool("BYPASS_CACHE", False)  # True = cache negeren en verse uitsnede maken (ook bij gpt)
+BG_COLOR_HEX   = env("BG_COLOR_HEX", "#EFF0F5")    # achtergrondkleur voor modellen zonder transparant (gpt-image-2), wordt weer weggeknipt
 
 FINAL_SIZE     = env_int("FINAL_SIZE", 2048)     # canvas (vierkant)
 BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
@@ -195,23 +196,50 @@ def get_flavor_cutout(naam, typ):
     img.save(fp); _fresh.add(key)
     return img
 
+def _hex_rgb(h):
+    h = h.lstrip("#"); return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
 def _gpt_cutout(naam, typ):
     prompt = (
-        f"Een professionele macro-foodfoto van {naam} ({typ}), gestyled als een KLEIN, NATUURLIJK GROEPJE "
-        "zoals in premium food styling: meerdere stuks of een natuurlijke hoeveelheid losjes bij elkaar "
-        "(bijvoorbeeld twee hele stuks met een lichte verstrooiing of wat kruimels ernaast) — NADRUKKELIJK "
-        "NIET één enkel, geïsoleerd exemplaar. Geschoten met een DSLR en macro-objectief, zacht daglicht, "
-        "ondiepe scherptediepte. Echte fotografie met natuurlijke textuur, poriën, glans en realistische "
-        "kleur, precies zoals een echte foto. Losjes gecentreerd, op een VOLLEDIG TRANSPARANTE achtergrond, "
-        "met subtiele natuurlijke schaduw. GEEN 3D-render, GEEN CGI, GEEN illustratie, GEEN klei of was, "
-        "GEEN cartoon, GEEN glad plastic uiterlijk, GEEN tekst, GEEN verpakking, GEEN bord of schaal."
+        f"Een professionele macro-foodfoto van {naam} ({typ}), gestyled als een klein, natuurlijk groepje "
+        "van een paar hele stuks dicht bij elkaar, zoals premium food styling — dus niet één enkel "
+        "geïsoleerd exemplaar. GEEN kruimels, korrels, poeder, zand of verstrooiing eromheen, GEEN "
+        "ondergrond of oppervlak en GEEN schaduw op een ondergrond: alleen de schoon uitgesneden hele "
+        "stuks. Geschoten met een DSLR en macro-objectief, zacht daglicht, ondiepe scherptediepte. Echte "
+        "fotografie met natuurlijke textuur, poriën, glans en realistische kleur. Losjes gecentreerd. "
+        "GEEN 3D-render, GEEN CGI, GEEN illustratie, GEEN klei of was, GEEN cartoon, GEEN glad plastic "
+        "uiterlijk, GEEN tekst, GEEN verpakking."
     )
+    solid = "image-2" in OPENAI_IMAGE_MODEL          # gpt-image-2 ondersteunt geen transparante achtergrond
+    if solid:
+        prompt += f" De achtergrond is één egale, effen kleur {BG_COLOR_HEX}, zonder objecten of schaduw."
     body = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1024",
-            "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": 1}
+            "background": "opaque" if solid else "transparent",
+            "output_format": "png", "quality": IMAGE_QUALITY, "n": 1}
     r = _openai_post("https://api.openai.com/v1/images/generations",
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
         data=json.dumps(body), timeout=300)
-    return Image.open(io.BytesIO(base64.b64decode(r.json()["data"][0]["b64_json"]))).convert("RGBA")
+    img = Image.open(io.BytesIO(base64.b64decode(r.json()["data"][0]["b64_json"]))).convert("RGBA")
+    if solid:
+        img = _remove_solid_bg(img, _hex_rgb(BG_COLOR_HEX))
+    return img
+
+def _remove_solid_bg(im, bg, tol=45):
+    """Egale achtergrond wegknippen -> transparant. rembg indien beschikbaar, anders kleur-key vanaf de randen."""
+    im = im.convert("RGBA")
+    try:
+        from rembg import remove
+        return remove(im).convert("RGBA")
+    except ImportError:
+        w, h = im.size
+        tmp = im.convert("RGB")
+        SENT = (1, 254, 2)
+        for c in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
+            ImageDraw.floodfill(tmp, c, SENT, thresh=tol)
+        amask = Image.frombytes("L", (w, h), bytes(0 if p == SENT else 255 for p in tmp.getdata()))
+        amask = amask.filter(ImageFilter.MinFilter(3))    # trim 1px achtergrondrand
+        im.putalpha(amask)
+        return im
 
 def _stock_cutout(naam):
     """Echte foto van Pexels ophalen en de achtergrond wegknippen (rembg) -> transparant."""
@@ -272,7 +300,8 @@ def _place_column(cv, items, cx, seed):
 
 def compose(bottle_img, prim, sec, seed=0):
     N = FINAL_SIZE
-    cv = Image.new("RGBA", (N, N), (0, 0, 0, 0))
+    fill = (_hex_rgb(BG_COLOR_HEX) + (255,)) if "image-2" in OPENAI_IMAGE_MODEL else (0, 0, 0, 0)
+    cv = Image.new("RGBA", (N, N), fill)      # gpt-image-2: hele achtergrond #EFF0F5; anders transparant
     cxL, cxR = int(COL_MARGIN * N), int((1 - COL_MARGIN) * N)
     _place_column(cv, prim, cxL, seed)         # primair links
     _place_column(cv, sec, cxR, seed + 1)      # secundair rechts
