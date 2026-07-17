@@ -36,6 +36,10 @@ on:
         type: choice
         options: ["gpt", "stock"]
         default: "gpt"
+      bypass_cache:
+        description: "Cache negeren en smaken opnieuw maken (ook bij gpt)"
+        type: boolean
+        default: false
 
 jobs:
   smaakfotos:
@@ -75,6 +79,7 @@ jobs:
           FLAVOR_PX: ${{ inputs.flavor_size }}
           CUTOUT_SOURCE: ${{ inputs.cutout_source }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          BYPASS_CACHE: ${{ inputs.bypass_cache }}
         run: python smaakfoto_generator.py
 
       - name: Gegenereerde foto's als artifact
