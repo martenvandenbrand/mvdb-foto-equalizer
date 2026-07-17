@@ -197,12 +197,14 @@ def get_flavor_cutout(naam, typ):
 
 def _gpt_cutout(naam, typ):
     prompt = (
-        f"Een professionele macro-productfoto van {naam} ({typ}), geschoten met een DSLR en macro-objectief, "
-        "zacht daglicht, ondiepe scherptediepte. ECHTE voedselfotografie: natuurlijke textuur, poriën, glans, "
-        "kleine onregelmatigheden en realistische kleur, precies zoals een echte foto. Eén los object, "
-        "gecentreerd, op een VOLLEDIG TRANSPARANTE achtergrond, met een subtiele natuurlijke schaduw. "
-        "GEEN 3D-render, GEEN CGI, GEEN illustratie, GEEN klei of was, GEEN cartoon, GEEN glad plastic "
-        "uiterlijk, GEEN tekst, GEEN verpakking."
+        f"Een professionele macro-foodfoto van {naam} ({typ}), gestyled als een KLEIN, NATUURLIJK GROEPJE "
+        "zoals in premium food styling: meerdere stuks of een natuurlijke hoeveelheid losjes bij elkaar "
+        "(bijvoorbeeld twee hele stuks met een lichte verstrooiing of wat kruimels ernaast) — NADRUKKELIJK "
+        "NIET één enkel, geïsoleerd exemplaar. Geschoten met een DSLR en macro-objectief, zacht daglicht, "
+        "ondiepe scherptediepte. Echte fotografie met natuurlijke textuur, poriën, glans en realistische "
+        "kleur, precies zoals een echte foto. Losjes gecentreerd, op een VOLLEDIG TRANSPARANTE achtergrond, "
+        "met subtiele natuurlijke schaduw. GEEN 3D-render, GEEN CGI, GEEN illustratie, GEEN klei of was, "
+        "GEEN cartoon, GEEN glad plastic uiterlijk, GEEN tekst, GEEN verpakking, GEEN bord of schaal."
     )
     body = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1024",
             "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": 1}
