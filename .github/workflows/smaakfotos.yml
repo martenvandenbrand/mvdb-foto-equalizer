@@ -1,0 +1,59 @@
+name: Genereer smaakfoto's
+
+# Handmatig starten via de "Run workflow"-knop op het Actions-tabblad.
+on:
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: "Aantal flessen per run (kostenbeheersing)"
+        type: choice
+        options: ["1", "10"]
+        default: "1"
+      handle:
+        description: "1 specifieke fles (URL-slug). Ingevuld = alleen deze fles, negeert batch"
+        type: string
+        default: ""
+      dry_run:
+        description: "Dry-run: wel genereren (kost credits) + artifact, maar niet uploaden/taggen"
+        type: boolean
+        default: true
+      image_model:
+        description: "Beeldmodel"
+        type: choice
+        options: ["gpt-image-1.5", "gpt-image-1-mini"]
+        default: "gpt-image-1.5"
+      image_quality:
+        description: "Kwaliteit (hoger = duurder)"
+        type: choice
+        options: ["low", "medium", "high"]
+        default: "medium"
+
+jobs:
+  smaakfotos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+      - name: Genereer smaakfoto's
+        env:
+          SHOP: ${{ secrets.SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BATCH_SIZE: ${{ inputs.batch_size }}
+          HANDLE: ${{ inputs.handle }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
+          IMAGE_QUALITY: ${{ inputs.image_quality }}
+        run: python smaakfoto_generator.py
+      - name: Gegenereerde foto's als artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smaakfotos
+          path: backup_smaak/
+          if-no-files-found: ignore
