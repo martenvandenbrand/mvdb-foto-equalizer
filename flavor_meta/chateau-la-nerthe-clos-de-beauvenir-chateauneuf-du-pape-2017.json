@@ -1,0 +1,26 @@
+{
+  "primair": [
+    {
+      "naam": "rijpe ananas",
+      "type": "fruit"
+    },
+    {
+      "naam": "citroenschil",
+      "type": "citrus"
+    },
+    {
+      "naam": "witte bloesem",
+      "type": "bloem"
+    }
+  ],
+  "secundair": [
+    {
+      "naam": "rokerige toon",
+      "type": "hout"
+    },
+    {
+      "naam": "bittere amandeltoon",
+      "type": "noot"
+    }
+  ]
+}

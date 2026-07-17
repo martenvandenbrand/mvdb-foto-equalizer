@@ -1,0 +1,30 @@
+{
+  "primair": [
+    {
+      "naam": "rijpe peer",
+      "type": "fruit"
+    },
+    {
+      "naam": "perzik",
+      "type": "fruit"
+    },
+    {
+      "naam": "witte bloemen",
+      "type": "bloem"
+    },
+    {
+      "naam": "grapefruit",
+      "type": "citrus"
+    }
+  ],
+  "secundair": [
+    {
+      "naam": "zoute ondertoon",
+      "type": "kruid"
+    },
+    {
+      "naam": "steenachtige ondertoon",
+      "type": "kruid"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "primair": [
+    {
+      "naam": "gedroogde kersen",
+      "type": "fruit"
+    },
+    {
+      "naam": "verwelkte rozen",
+      "type": "bloem"
+    },
+    {
+      "naam": "donker fruit",
+      "type": "fruit"
+    },
+    {
+      "naam": "potpourri",
+      "type": "bloem"
+    }
+  ],
+  "secundair": [
+    {
+      "naam": "leer",
+      "type": "hout"
+    },
+    {
+      "naam": "tabak",
+      "type": "hout"
+    },
+    {
+      "naam": "rook",
+      "type": "hout"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "primair": [
+    {
+      "naam": "rijpe bramen",
+      "type": "fruit"
+    },
+    {
+      "naam": "blauwe bessen",
+      "type": "fruit"
+    },
+    {
+      "naam": "rijpe kersen",
+      "type": "fruit"
+    },
+    {
+      "naam": "pruimen",
+      "type": "fruit"
+    },
+    {
+      "naam": "gedroogde lavendel",
+      "type": "bloem"
+    }
+  ],
+  "secundair": [
+    {
+      "naam": "cacao",
+      "type": "noot"
+    },
+    {
+      "naam": "cederhout",
+      "type": "hout"
+    },
+    {
+      "naam": "eiken",
+      "type": "hout"
+    },
+    {
+      "naam": "kruidigheid",
+      "type": "kruid"
+    }
+  ]
+}

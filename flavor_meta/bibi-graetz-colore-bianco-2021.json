@@ -1,0 +1,26 @@
+{
+  "primair": [
+    {
+      "naam": "gele bloemen",
+      "type": "bloem"
+    },
+    {
+      "naam": "perzik",
+      "type": "fruit"
+    },
+    {
+      "naam": "amandel",
+      "type": "noot"
+    }
+  ],
+  "secundair": [
+    {
+      "naam": "eiken",
+      "type": "hout"
+    },
+    {
+      "naam": "amandelpasta",
+      "type": "noot"
+    }
+  ]
+}
