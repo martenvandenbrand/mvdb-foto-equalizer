@@ -41,6 +41,15 @@ BG_COLOR_HEX   = env("BG_COLOR_HEX", "#EFF0F5")    # achtergrondkleur voor model
 SYN_FILE       = pathlib.Path("synonyms.json")    # variant -> canonieke smaak (bespaart generaties)
 MERGE_COLOR_VARIANTS = env_bool("MERGE_COLOR_VARIANTS", True)  # ook kleur/rijpheid samenvoegen (rode+zwarte kers -> kers)
 
+# --- kosten (USD; beeld-tokens komen echt uit de API-respons "usage") ---
+IMG_RATES = {   # per token: in = prompt/input, out = gegenereerd beeld (output)
+    "gpt-image-1.5":    {"in": 5.0 / 1e6, "out": 32.0 / 1e6},
+    "gpt-image-1-mini": {"in": 2.5 / 1e6, "out": 2.5 / 1e6},
+    "gpt-image-2":      {"in": 5.0 / 1e6, "out": 32.0 / 1e6},
+}
+TXT_IN_RATE, TXT_OUT_RATE = 0.15 / 1e6, 0.60 / 1e6            # gpt-4o-mini
+_cost = {"img": 0, "img_in": 0, "img_out": 0, "txt_calls": 0, "txt_in": 0, "txt_out": 0}
+
 FINAL_SIZE     = env_int("FINAL_SIZE", 2048)     # canvas (vierkant)
 BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
 FLAVOR_PX      = env_int("FLAVOR_PX", 260)       # max grootte van een smaak-uitsnede (subtiliteit)
@@ -239,7 +248,12 @@ def _extract_flavors_api(description):
                          "response_format": {"type": "json_object"},
                          "messages": [{"role": "system", "content": FLAVOR_SYS},
                                       {"role": "user", "content": text}]}), timeout=60)
-    content = re.sub(r"^```(?:json)?|```$", "", r.json()["choices"][0]["message"]["content"].strip()).strip()
+    resp = r.json()
+    u = resp.get("usage", {})
+    _cost["txt_calls"] += 1
+    _cost["txt_in"] += u.get("prompt_tokens", 0)
+    _cost["txt_out"] += u.get("completion_tokens", 0)
+    content = re.sub(r"^```(?:json)?|```$", "", resp["choices"][0]["message"]["content"].strip()).strip()
     try:
         data = json.loads(content)
         prim = [x for x in data.get("primair", []) if x.get("naam")][:5]
@@ -297,7 +311,12 @@ def _gpt_cutout(naam, typ):
     r = _openai_post("https://api.openai.com/v1/images/generations",
         headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
         data=json.dumps(body), timeout=300)
-    img = Image.open(io.BytesIO(base64.b64decode(r.json()["data"][0]["b64_json"]))).convert("RGBA")
+    resp = r.json()
+    uu = resp.get("usage", {})
+    _cost["img"] += 1
+    _cost["img_in"] += uu.get("input_tokens", 0)
+    _cost["img_out"] += uu.get("output_tokens", 0)
+    img = Image.open(io.BytesIO(base64.b64decode(resp["data"][0]["b64_json"]))).convert("RGBA")
     if solid:
         img = _remove_solid_bg(img, _hex_rgb(BG_COLOR_HEX))
     return img
@@ -431,6 +450,13 @@ def main():
             print(f"[ERR] {p.get('handle')}: {e}"); failed += 1
 
     print(f"\nKlaar. Verwerkt: {done} | fouten: {failed}")
+    rates = IMG_RATES.get(OPENAI_IMAGE_MODEL, IMG_RATES["gpt-image-1.5"])
+    img_cost = _cost["img_in"] * rates["in"] + _cost["img_out"] * rates["out"]
+    txt_cost = _cost["txt_in"] * TXT_IN_RATE + _cost["txt_out"] * TXT_OUT_RATE
+    print(f"OpenAI-kosten deze run: ~${img_cost + txt_cost:.2f} — "
+          f"{_cost['img']} beelden ({_cost['img_in'] + _cost['img_out']:,} tokens), "
+          f"{_cost['txt_calls']} extracties ({_cost['txt_in'] + _cost['txt_out']:,} tokens). "
+          f"Cache-treffers zijn gratis.")
     print(f"Beelden in: {BACKUP_DIR.resolve()} | cache: {CACHE_DIR.resolve()}")
 
 if __name__ == "__main__":
