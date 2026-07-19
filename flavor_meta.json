@@ -1,0 +1,5489 @@
+{
+  "accornero-blanc-de-blancs-extra-brut": {
+    "primair": [
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "geroosterde amandel",
+        "type": "noot"
+      }
+    ]
+  },
+  "accornero-bricco-battista": {
+    "primair": [
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "koffie",
+        "type": "noot"
+      },
+      {
+        "naam": "zoete tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "accornero-bricco-del-bosco-grignolino": {
+    "primair": [
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "bosaardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte peper",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "inox",
+        "type": "hout"
+      }
+    ]
+  },
+  "accornero-bricco-del-bosco-vigne-vecchie": {
+    "primair": [
+      {
+        "naam": "gedroogde bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "bosbessenjam",
+        "type": "fruit"
+      },
+      {
+        "naam": "eucalyptus",
+        "type": "kruid"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      }
+    ]
+  },
+  "accornero-brigantino": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "rozen",
+        "type": "bloem"
+      },
+      {
+        "naam": "viooltje",
+        "type": "bloem"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "bubbel",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "accornero-campomoro-barbera": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidige toets",
+        "type": "kruid"
+      }
+    ]
+  },
+  "accornero-centenario": {
+    "primair": [
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "kruiden",
+        "type": "kruid"
+      }
+    ]
+  },
+  "accornero-cima-riserva-della-casa": {
+    "primair": [
+      {
+        "naam": "zwarte bes",
+        "type": "fruit"
+      },
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "boter",
+        "type": "zuivel"
+      },
+      {
+        "naam": "toast",
+        "type": "hout"
+      },
+      {
+        "naam": "noten",
+        "type": "noot"
+      }
+    ]
+  },
+  "accornero-derthona-2023": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrusschil",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "accornero-fonsina": {
+    "primair": [
+      {
+        "naam": "appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloem",
+        "type": "bloem"
+      },
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zout",
+        "type": "kruid"
+      },
+      {
+        "naam": "steen",
+        "type": "kruid"
+      }
+    ]
+  },
+  "accornero-giulin-barbera-del-monferrato": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "accornero-la-bernardina-monferrato-freisa": {
+    "primair": [
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "viooltjes",
+        "type": "bloem"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "malolactische omzetting",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "accornero-la-mattacchiona": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ]
+  },
+  "accornero-monferrato-nebbiolo": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "aarde",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "vanille",
+        "type": "bloem"
+      },
+      {
+        "naam": "zout",
+        "type": "kruid"
+      }
+    ]
+  },
+  "accornero-viari-ruche-di-castagnole-monferrato": {
+    "primair": [
+      {
+        "naam": "viooltjes",
+        "type": "bloem"
+      },
+      {
+        "naam": "geranium",
+        "type": "bloem"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rvs",
+        "type": "hout"
+      }
+    ]
+  },
+  "akrille-cutrera-bastianich-akrille-cerasuolo-di-vittoria-classico-docg": {
+    "primair": [
+      {
+        "naam": "bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "zure kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zoethout",
+        "type": "kruid"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "akrille-cutrera-bastianich-cerasuolo-di-vittoria-docg": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "frisheid",
+        "type": "bloem"
+      }
+    ]
+  },
+  "akrille-cutrera-bastianich-vittoria-doc-frappato": {
+    "primair": [
+      {
+        "naam": "bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "wilde aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "verwachte snijbloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "frisheid",
+        "type": "zuivel"
+      },
+      {
+        "naam": "lichte tannine",
+        "type": "noot"
+      }
+    ]
+  },
+  "alheit-vineyards-cartology-2015": {
+    "primair": [
+      {
+        "naam": "citrusolie",
+        "type": "citrus"
+      },
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerigheid",
+        "type": "hout"
+      },
+      {
+        "naam": "marsepein",
+        "type": "noot"
+      }
+    ]
+  },
+  "alheit-vineyards-cartology-2020": {
+    "primair": [
+      {
+        "naam": "citrusrasp",
+        "type": "citrus"
+      },
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "kardemom",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "boter",
+        "type": "zuivel"
+      },
+      {
+        "naam": "minerale ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "alheit-vineyards-cartology-2021": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenzeste",
+        "type": "citrus"
+      },
+      {
+        "naam": "zoete kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "gist",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "alheit-vineyards-cartology-2022": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "gedroogde kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "beton",
+        "type": "hout"
+      },
+      {
+        "naam": "gebruikte houten vaten",
+        "type": "hout"
+      }
+    ]
+  },
+  "alheit-vineyards-cartology-2023-rare-old-vine-chenin-blanc-semillon-west-kaap-zuid-afrika-750ml": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "kamille",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "waswas",
+        "type": "zuivel"
+      },
+      {
+        "naam": "licht zoutige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "antinori-tenuta-tignanello-marchese-antinori-chianti-classico-riserva-2020": {
+    "primair": [
+      {
+        "naam": "vers rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "lavendel",
+        "type": "bloem"
+      },
+      {
+        "naam": "kaasjeskruid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "witte chocolade",
+        "type": "zuivel"
+      },
+      {
+        "naam": "kruidige tonen",
+        "type": "kruid"
+      }
+    ]
+  },
+  "apostelhoeve-cuvee-xii-2024": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "grapefruit",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "arrigo-etna-bianco-doc-2024": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zout",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "beaumont-chenin-unwooded-2024": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "gele appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenbloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romigheid",
+        "type": "zuivel"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      }
+    ]
+  },
+  "beaumont-jackals-river-pinotage-2021": {
+    "primair": [
+      {
+        "naam": "rode kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "gerookte specerijen",
+        "type": "kruid"
+      },
+      {
+        "naam": "houttoontje",
+        "type": "hout"
+      },
+      {
+        "naam": "subtiele complexiteit",
+        "type": "hout"
+      }
+    ]
+  },
+  "bibi-graetz-colore-bianco-2021": {
+    "primair": [
+      {
+        "naam": "gele bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "amandelpasta",
+        "type": "noot"
+      }
+    ]
+  },
+  "bibi-graetz-testamatta-2022": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "biodynamische-oranje-wijn-vin-orange-scene-n-5-2025": {
+    "primair": [
+      {
+        "naam": "gedroogde abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "sinaasappelschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "gember",
+        "type": "kruid"
+      },
+      {
+        "naam": "kamille",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "tannine",
+        "type": "hout"
+      },
+      {
+        "naam": "structuur",
+        "type": "hout"
+      }
+    ]
+  },
+  "biodynamische-rode-wijn-100-pinot-noir-lune-2025": {
+    "primair": [
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rode kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte bes",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "roestvrijstaal",
+        "type": "hout"
+      }
+    ]
+  },
+  "biodynamische-rode-wijn-pinot-noir-scene-n-2-2025": {
+    "primair": [
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      }
+    ],
+    "secundair": []
+  },
+  "biologische-biodynamische-wijn-viognier-scene-n-6-2025": {
+    "primair": [
+      {
+        "naam": "kamperfoelie",
+        "type": "bloem"
+      },
+      {
+        "naam": "meidoorn",
+        "type": "bloem"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "konfijte citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "honing",
+        "type": "zoet"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "zilte toon",
+        "type": "kruid"
+      },
+      {
+        "naam": "minerale toon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "biologische-biodynamische-witte-wijn-viognier-lune-2025": {
+    "primair": [
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemenhoning",
+        "type": "bloem"
+      },
+      {
+        "naam": "meidoorn",
+        "type": "bloem"
+      },
+      {
+        "naam": "gekristalliseerde citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "steenfruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "ziltigheid",
+        "type": "kruid"
+      },
+      {
+        "naam": "mineraliteit",
+        "type": "kruid"
+      },
+      {
+        "naam": "romigheid",
+        "type": "zuivel"
+      },
+      {
+        "naam": "botersaus",
+        "type": "zuivel"
+      },
+      {
+        "naam": "frisse zuren",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "biologische-en-biodynamische-rode-wijn-margot-2023": {
+    "primair": [
+      {
+        "naam": "rijpe rode bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      }
+    ]
+  },
+  "bocca-di-lupo-aglianico-castel-del-monte-doc-2018-magnum": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "mediterrane kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "donkere chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "zoethout",
+        "type": "kruid"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "bolgheri-superiore-2015": {
+    "primair": [
+      {
+        "naam": "zwarte bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rozemarijn",
+        "type": "kruid"
+      },
+      {
+        "naam": "tijm",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "hout"
+      }
+    ]
+  },
+  "carlo-schmitt-herrenberg-riesling-gg-2025": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "wit bloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "steenachtige toets",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "carlo-schmitt-kowericher-laurentiuslay-riesling-kabinett-2025": {
+    "primair": [
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige toon",
+        "type": "hout"
+      },
+      {
+        "naam": "minerale nasmaak",
+        "type": "hout"
+      }
+    ]
+  },
+  "carlo-schmitt-leiwener-riesling-alte-reben-2025": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zout",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtig",
+        "type": "kruid"
+      }
+    ]
+  },
+  "carlo-schmitt-longuicher-maximiner-herrenberg-riesling-beerenauslese-2006": {
+    "primair": [
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "nectarine",
+        "type": "fruit"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "karamel",
+        "type": "zuivel"
+      },
+      {
+        "naam": "zout",
+        "type": "kruid"
+      }
+    ]
+  },
+  "carlo-schmitt-neumagener-rosengartchen-riesling-auslese-2018": {
+    "primair": [
+      {
+        "naam": "rijpe perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "hout"
+      }
+    ]
+  },
+  "carlo-schmitt-rosengartchen-riesling-trocken-2025": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerigheid",
+        "type": "hout"
+      },
+      {
+        "naam": "steenachtige toets",
+        "type": "mineraal"
+      },
+      {
+        "naam": "gist",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "carlo-schmitt-vom-schiefer-riesling-trocken-2025": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige toon",
+        "type": "hout"
+      }
+    ]
+  },
+  "carlo-schmitt-weissburgunder-trocken-2025": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "fris fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "steenachtig",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romigheid",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "caroline-morey-chassagne-montrachet-chambrees-2022": {
+    "primair": [
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "acacia",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "geroosterd brood",
+        "type": "hout"
+      },
+      {
+        "naam": "toastaroma's",
+        "type": "hout"
+      }
+    ]
+  },
+  "cascina-delle-monache-bricco-della-lodra-2025": {
+    "primair": [
+      {
+        "naam": "wilde bosbessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "witte peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "zoete kruiden",
+        "type": "kruid"
+      }
+    ]
+  },
+  "cascina-delle-monache-nature-metodo-classico-pas-dose-2023": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "acacia",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brood",
+        "type": "hout"
+      },
+      {
+        "naam": "geroosterde amandel",
+        "type": "noot"
+      }
+    ]
+  },
+  "cascina-delle-monache-ronco-del-mandorlo-2025": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "vlierbloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "kiwi",
+        "type": "fruit"
+      },
+      {
+        "naam": "oranjebloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "acacia",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "zout",
+        "type": "kruid"
+      }
+    ]
+  },
+  "cascina-delle-monache-sori-della-monaca-2025": {
+    "primair": [
+      {
+        "naam": "kweepeer",
+        "type": "fruit"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "groene mango",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "groen fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romig",
+        "type": "zuivel"
+      },
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "lichte toets witte peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "textuur",
+        "type": "hout"
+      }
+    ]
+  },
+  "castel-di-salve-aleatico-passito": {
+    "primair": [
+      {
+        "naam": "rijpe pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "salie",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "balsamiek",
+        "type": "kruid"
+      }
+    ]
+  },
+  "castel-di-salve-armecolo": {
+    "primair": [
+      {
+        "naam": "aalbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "rijpe kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "meidoorn",
+        "type": "bloem"
+      }
+    ],
+    "secundair": []
+  },
+  "castel-di-salve-brut-rose-negroamaro-spumante": {
+    "primair": [
+      {
+        "naam": "granaatappel",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "gist",
+        "type": "hout"
+      }
+    ]
+  },
+  "castel-di-salve-centino-primitivo": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidige tonen",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "houttonen",
+        "type": "hout"
+      },
+      {
+        "naam": "balsamico",
+        "type": "kruid"
+      }
+    ]
+  },
+  "castel-di-salve-cento-su-cento": {
+    "primair": [
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "zoete specerijen",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "romige ondertoon",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "castel-di-salve-frusufao-fiano-salento-igt": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "mango",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrusschil",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rvs",
+        "type": "hout"
+      }
+    ]
+  },
+  "castel-di-salve-lama-del-tenente": {
+    "primair": [
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "jam",
+        "type": "fruit"
+      },
+      {
+        "naam": "gekonfijt fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      }
+    ]
+  },
+  "castel-di-salve-priante": {
+    "primair": [
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "balsamico",
+        "type": "kruid"
+      },
+      {
+        "naam": "specerijen",
+        "type": "kruid"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "castel-di-salve-santimedici-rosato": {
+    "primair": [
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "munt",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zout",
+        "type": "kruid"
+      },
+      {
+        "naam": "roestvrij staal",
+        "type": "hout"
+      }
+    ]
+  },
+  "castel-di-salve-santimedici-rosso": {
+    "primair": [
+      {
+        "naam": "rode bes",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      }
+    ]
+  },
+  "castel-di-salve-santimedici-verdeca": {
+    "primair": [
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "passievrucht",
+        "type": "fruit"
+      }
+    ],
+    "secundair": []
+  },
+  "castellare-i-sodi-san-niccolo-2021": {
+    "primair": [
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "leer",
+        "type": "hout"
+      },
+      {
+        "naam": "tabaksbladeren",
+        "type": "hout"
+      }
+    ]
+  },
+  "castillo-ygay-gran-reserva-2000": {
+    "primair": [
+      {
+        "naam": "gedroogd fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "leer",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "natte bosbodem",
+        "type": "aards"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "fluweel",
+        "type": "zuivel"
+      },
+      {
+        "naam": "kruidige jus",
+        "type": "kruid"
+      },
+      {
+        "naam": "nootachtig vet",
+        "type": "noot"
+      },
+      {
+        "naam": "rijpe fruittonen",
+        "type": "fruit"
+      }
+    ]
+  },
+  "castillo-ygay-gran-reserva-2007": {
+    "primair": [
+      {
+        "naam": "rijp rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "truffel",
+        "type": "noot"
+      },
+      {
+        "naam": "wierook",
+        "type": "kruid"
+      },
+      {
+        "naam": "milde kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "Amerikaans eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "Frans eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "beton",
+        "type": "hout"
+      }
+    ]
+  },
+  "caviola-barolo-sottocastello-di-novello-2019": {
+    "primair": [
+      {
+        "naam": "menthol",
+        "type": "kruid"
+      },
+      {
+        "naam": "eucalyptus",
+        "type": "kruid"
+      },
+      {
+        "naam": "gedroogde rozenblaadjes",
+        "type": "bloem"
+      },
+      {
+        "naam": "donkere chocolade",
+        "type": "fruit"
+      },
+      {
+        "naam": "herfstbladeren",
+        "type": "plant"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerig",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "hout"
+      },
+      {
+        "naam": "kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "lichte bittere amandelnoot",
+        "type": "noot"
+      },
+      {
+        "naam": "zijdeachtig",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "ceretto-barolo-brunate-2015": {
+    "primair": [
+      {
+        "naam": "gedroogde kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "verwelkte rozen",
+        "type": "bloem"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "potpourri",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "leer",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "hout"
+      },
+      {
+        "naam": "rook",
+        "type": "hout"
+      }
+    ]
+  },
+  "champagne-gaston-burtin-brut": {
+    "primair": [
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      }
+    ]
+  },
+  "champagne-gaston-burtin-hommage-a-gaston-burtin-brut-0375": {
+    "primair": [
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "steenfruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "romig",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "champagne-gaston-burtin-hommage-a-gaston-burtin-brut-jerobaum": {
+    "primair": [
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "honing",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "champagne-verrier-fils-vantorosso-selection": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloesem",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "bubbels",
+        "type": "hout"
+      }
+    ]
+  },
+  "chateau-barde-haut-2023": {
+    "primair": [
+      {
+        "naam": "zwarte kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "wilde bosbessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "verse munt",
+        "type": "kruid"
+      },
+      {
+        "naam": "drop",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "espresso",
+        "type": "noot"
+      },
+      {
+        "naam": "romig",
+        "type": "zuivel"
+      },
+      {
+        "naam": "minerale ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "ziltige ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "fijnmazige tannines",
+        "type": "hout"
+      }
+    ]
+  },
+  "chateau-corton-c-aloxe-corton-premier-cru-les-paulands-2017": {
+    "primair": [
+      {
+        "naam": "donkere bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "wilde kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rijp rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "aardse tonen",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "rokerig accent",
+        "type": "hout"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      }
+    ]
+  },
+  "chateau-haute-nauve-son-altesse-saint-emilion-grand-cru-2022": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kersen",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "gerookte specerijen",
+        "type": "kruid"
+      }
+    ]
+  },
+  "chateau-la-nerthe-clos-de-beauvenir-chateauneuf-du-pape-2017": {
+    "primair": [
+      {
+        "naam": "rijpe ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerige toon",
+        "type": "hout"
+      },
+      {
+        "naam": "bittere amandeltoon",
+        "type": "noot"
+      }
+    ]
+  },
+  "chateau-langoa-barton-saint-julien-grand-cru-classe-2024": {
+    "primair": [
+      {
+        "naam": "zwarte bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "mineraal",
+        "type": "grond"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "grafiet",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      },
+      {
+        "naam": "chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "franse eiken vaten",
+        "type": "hout"
+      }
+    ]
+  },
+  "chateau-suduiraut-sauternes-2022": {
+    "primair": [
+      {
+        "naam": "abrikozenjam",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "sinaasappelschil",
+        "type": "fruit"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogd fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "geroosterde amandel",
+        "type": "noot"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      },
+      {
+        "naam": "karamel",
+        "type": "zuivel"
+      },
+      {
+        "naam": "gember",
+        "type": "kruid"
+      },
+      {
+        "naam": "boter",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "clos-saint-jean-chateauneuf-du-pape-la-combe-des-fous-2021": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "lavendel",
+        "type": "bloem"
+      },
+      {
+        "naam": "tijm",
+        "type": "kruid"
+      },
+      {
+        "naam": "zwarte olijf",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "rokerigheid",
+        "type": "hout"
+      },
+      {
+        "naam": "zoethout",
+        "type": "kruid"
+      },
+      {
+        "naam": "warme specerijen",
+        "type": "kruid"
+      },
+      {
+        "naam": "nootachtige zoetheid",
+        "type": "noot"
+      }
+    ]
+  },
+  "corton-c-ladoix-2015": {
+    "primair": [
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "aardbeien",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "cacao",
+        "type": "noot"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "cutrera-bastianich-akrille-catarratto-lucido": {
+    "primair": [
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "oranjebloesem",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zilte ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "cutrera-bastianich-akrille-grillo": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "jasmijn",
+        "type": "bloem"
+      }
+    ],
+    "secundair": []
+  },
+  "cutrera-bastianich-akrille-nero-d-avola": {
+    "primair": [
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "zure kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "rood bessenfruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "fris",
+        "type": "hout"
+      }
+    ]
+  },
+  "domaine-jean-collet-chablis-1er-cru-montee-de-tonnerre-2023": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerigheid",
+        "type": "hout"
+      },
+      {
+        "naam": "textuur",
+        "type": "hout"
+      },
+      {
+        "naam": "zilt",
+        "type": "kruid"
+      }
+    ]
+  },
+  "domaine-jean-collet-chablis-2021": {
+    "primair": [
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrusschil",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "minerale ondertoon",
+        "type": "hout"
+      },
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "dominio-del-aguila-picaro-vinas-viejas-2022": {
+    "primair": [
+      {
+        "naam": "zwarte bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "blauwe pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "sappig rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "balsamico",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "bloem"
+      },
+      {
+        "naam": "fijne kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "rokerig accent",
+        "type": "hout"
+      },
+      {
+        "naam": "Frans eikenhout",
+        "type": "hout"
+      },
+      {
+        "naam": "nootachtige smaak",
+        "type": "noot"
+      }
+    ]
+  },
+  "es-fangar-vins-fangar-elements-2013": {
+    "primair": [
+      {
+        "naam": "zwarte bes",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidige garrigue",
+        "type": "kruid"
+      },
+      {
+        "naam": "laurier",
+        "type": "kruid"
+      },
+      {
+        "naam": "mediterrane struiken",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "warme aarde",
+        "type": "hout"
+      },
+      {
+        "naam": "stevige tannines",
+        "type": "hout"
+      },
+      {
+        "naam": "frisse zuren",
+        "type": "zuivel"
+      },
+      {
+        "naam": "lange afdronk",
+        "type": "hout"
+      },
+      {
+        "naam": "kruidige afdronk",
+        "type": "kruid"
+      }
+    ]
+  },
+  "es-fangar-vins-fangar-elements-2013-magnum": {
+    "primair": [
+      {
+        "naam": "rode bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "viooltje",
+        "type": "bloem"
+      },
+      {
+        "naam": "zoete kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "Frans eikenhout",
+        "type": "hout"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "mediterrane kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "tijm",
+        "type": "kruid"
+      },
+      {
+        "naam": "rozemarijn",
+        "type": "kruid"
+      }
+    ]
+  },
+  "es-fangar-vins-genesis-semi-dolce-2023": {
+    "primair": [
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "banaan",
+        "type": "fruit"
+      },
+      {
+        "naam": "jasmijn",
+        "type": "bloem"
+      }
+    ],
+    "secundair": []
+  },
+  "es-fangar-vins-lo-cortinel-lo-blanc-2024": {
+    "primair": [
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "noten",
+        "type": "noot"
+      },
+      {
+        "naam": "honing",
+        "type": "zuivel"
+      },
+      {
+        "naam": "zoete specerijen",
+        "type": "kruid"
+      }
+    ]
+  },
+  "es-fangar-vins-n-amarat-2011-magnum": {
+    "primair": [
+      {
+        "naam": "rijpe rode bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "mediterrane kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "geroosterde noten",
+        "type": "noot"
+      },
+      {
+        "naam": "balsamieke toets",
+        "type": "kruid"
+      }
+    ]
+  },
+  "es-fangar-vins-n-amarat-2015": {
+    "primair": [
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "mediterrane kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "witte truffel",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cacao",
+        "type": "noot"
+      },
+      {
+        "naam": "leer",
+        "type": "hout"
+      }
+    ]
+  },
+  "es-fangar-vins-sa-fita-blanc-2023": {
+    "primair": [
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "veldbloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "zilte ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "frisheid",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romigheid",
+        "type": "zuivel"
+      },
+      {
+        "naam": "kruidige toets",
+        "type": "kruid"
+      },
+      {
+        "naam": "zoute nasmaak",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige nasmaak",
+        "type": "kruid"
+      },
+      {
+        "naam": "cremigheid",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "es-fangar-vins-sa-sivina-blanc-2023": {
+    "primair": [
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "gele bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      }
+    ]
+  },
+  "es-fangar-vins-son-p-2018": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "mediterrane kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "es-fangar-vins-son-p-2024": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "balsamico",
+        "type": "zuur"
+      },
+      {
+        "naam": "kruidige toets",
+        "type": "kruid"
+      }
+    ]
+  },
+  "es-fangar-vins-twentytwelve-pink-2024": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "rozenblaadjes",
+        "type": "bloem"
+      },
+      {
+        "naam": "vers gemaaid gras",
+        "type": "kruid"
+      },
+      {
+        "naam": "gekonfijte toets",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zacht",
+        "type": "zuivel"
+      },
+      {
+        "naam": "kracht",
+        "type": "hout"
+      },
+      {
+        "naam": "frisheid",
+        "type": "kruid"
+      },
+      {
+        "naam": "natuurlijke zuurgraad",
+        "type": "kruid"
+      },
+      {
+        "naam": "vettige vis",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "es-fangar-vins-twentytwelve-white-2024": {
+    "primair": [
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "muscat-parfum",
+        "type": "bloem"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "meloen",
+        "type": "fruit"
+      },
+      {
+        "naam": "venkel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "honing",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "galatrona-2022": {
+    "primair": [
+      {
+        "naam": "donker kersenfruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "cassis",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "hout"
+      },
+      {
+        "naam": "donkere chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "specerijen",
+        "type": "kruid"
+      }
+    ]
+  },
+  "gaston-burtin-brut-hommage-a-gaston-burtin-magnum": {
+    "primair": [
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "honing",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "gaston-burtin-hommage-a-gaston-burtin-extra-brut-2019": {
+    "primair": [
+      {
+        "naam": "sinaasappelschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "wit fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "acaciahoning",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "broodtoon",
+        "type": "hout"
+      }
+    ]
+  },
+  "gaston-burtin-hommage-a-gaston-burtin-rose": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "rozenblaadjes",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romige toon",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "giulin-barbera-del-monferrato-2024-0-375": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "gran-reserva-2016": {
+    "primair": [
+      {
+        "naam": "wilde aardbeien",
+        "type": "fruit"
+      },
+      {
+        "naam": "rode bessen",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "geroosterd brood",
+        "type": "hout"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      },
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      }
+    ]
+  },
+  "harlan-estate-the-mascot": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      }
+    ]
+  },
+  "hommage-a-gaston-burtin-blanc-de-blancs-2018": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "grapefruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "exotisch fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "verse amandel",
+        "type": "noot"
+      },
+      {
+        "naam": "romige textuur",
+        "type": "zuivel"
+      },
+      {
+        "naam": "brood-achtige karakter",
+        "type": "hout"
+      },
+      {
+        "naam": "hartige ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "umami",
+        "type": "kruid"
+      }
+    ]
+  },
+  "hommage-a-gaston-burtin-vintage-2015": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "zure appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "panettone",
+        "type": "fruit"
+      },
+      {
+        "naam": "biscuit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "geroosterde noten",
+        "type": "noot"
+      },
+      {
+        "naam": "romige textuur",
+        "type": "zuivel"
+      },
+      {
+        "naam": "getoaste smaak",
+        "type": "hout"
+      }
+    ]
+  },
+  "jean-claude-ramonet-chassagne-montrachet-1er-cru-morgeot-2022": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "honing",
+        "type": "fruit"
+      },
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerigheid",
+        "type": "hout"
+      },
+      {
+        "naam": "romige textuur",
+        "type": "zuivel"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      },
+      {
+        "naam": "minerale ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "subtiele rokerigheid",
+        "type": "hout"
+      }
+    ]
+  },
+  "jean-claude-ramonet-chassagne-montrachet-doudriotte-2019": {
+    "primair": [
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenbloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      },
+      {
+        "naam": "krijt",
+        "type": "mineraal"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      }
+    ]
+  },
+  "jean-claude-ramonet-coteaux-bourguignons-rouge-2020": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemig",
+        "type": "bloem"
+      }
+    ],
+    "secundair": []
+  },
+  "jean-claude-ramonet-puligny-montrachet-enseignieres-2019": {
+    "primair": [
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "amandelbloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "krijt",
+        "type": "mineraal"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      }
+    ]
+  },
+  "jean-marc-burgaud-morgon-cote-du-py-2022": {
+    "primair": [
+      {
+        "naam": "rijpe bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloedsinaasappel",
+        "type": "citrus"
+      },
+      {
+        "naam": "viooltjes",
+        "type": "bloem"
+      },
+      {
+        "naam": "zwarte fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "leisteen",
+        "type": "hout"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      },
+      {
+        "naam": "ijzerachtige ondertoon",
+        "type": "hout"
+      },
+      {
+        "naam": "minerale bodemtonen",
+        "type": "hout"
+      },
+      {
+        "naam": "cementen tanks",
+        "type": "hout"
+      }
+    ]
+  },
+  "kaesler-the-bogan-shiraz-2006": {
+    "primair": [
+      {
+        "naam": "rijpe pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "blauwe bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "warme kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "pure chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "vanille",
+        "type": "bloem"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "klein-constantia-vin-de-constance-2021-kopie": {
+    "primair": [
+      {
+        "naam": "abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "kweepeer",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "nectarine",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "gezouten karamel",
+        "type": "zuivel"
+      },
+      {
+        "naam": "vlierbloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "zilte ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "boter",
+        "type": "zuivel"
+      },
+      {
+        "naam": "speciaal houten vaten",
+        "type": "hout"
+      }
+    ]
+  },
+  "klein-constantia-vin-de-constance-2022": {
+    "primair": [
+      {
+        "naam": "gedroogde abrikoos",
+        "type": "fruit"
+      },
+      {
+        "naam": "sinaasappelmarmelade",
+        "type": "fruit"
+      },
+      {
+        "naam": "jasmijn",
+        "type": "bloem"
+      },
+      {
+        "naam": "rozenwater",
+        "type": "bloem"
+      },
+      {
+        "naam": "bloesem",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "sandelhout",
+        "type": "hout"
+      }
+    ]
+  },
+  "klinger-chardonnay-pizpor-2025": {
+    "primair": [
+      {
+        "naam": "appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "romige textuur",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "klinger-gewurztraminer-2023": {
+    "primair": [
+      {
+        "naam": "lychee",
+        "type": "fruit"
+      },
+      {
+        "naam": "rozenblad",
+        "type": "bloem"
+      },
+      {
+        "naam": "rijpe perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "geel fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "frisse zuren",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "klinger-masnen-vignal-2022": {
+    "primair": [
+      {
+        "naam": "rijpe appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "broodachtig",
+        "type": "hout"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      },
+      {
+        "naam": "romige textuur",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "klinger-nosiola": {
+    "primair": [
+      {
+        "naam": "rijpe appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      },
+      {
+        "naam": "romige rand",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "klinger-vernatsch-2024": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "amandel",
+        "type": "noot"
+      },
+      {
+        "naam": "kruidige toets",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "knoll-chardonnay-loibner-smaragd": {
+    "primair": [
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "boter",
+        "type": "zuivel"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "bittere amandel",
+        "type": "noot"
+      }
+    ]
+  },
+  "knoll-riesling-smaragd-loibner": {
+    "primair": [
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citroenschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloesem",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "hout"
+      },
+      {
+        "naam": "rokerige ondertoon",
+        "type": "hout"
+      }
+    ]
+  },
+  "l-oratoire-des-papes-chateauneuf-du-pape-2023": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "tijm",
+        "type": "kruid"
+      },
+      {
+        "naam": "rozemarijn",
+        "type": "kruid"
+      },
+      {
+        "naam": "lavendel",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "la-rioja-alta-904-gran-reserva-seleccion-especcial-2015": {
+    "primair": [
+      {
+        "naam": "wilde aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "rode kers",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "gemalen koffie",
+        "type": "noot"
+      },
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "brioche",
+        "type": "zuivel"
+      },
+      {
+        "naam": "karamel",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "marchesi-antinori-tignanello-2016": {
+    "primair": [
+      {
+        "naam": "rijp rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "verse bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bosbessen",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "pure chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "lichte kruidigheid",
+        "type": "kruid"
+      }
+    ]
+  },
+  "neri-borrigliona-211-2022": {
+    "primair": [
+      {
+        "naam": "wilde tijm",
+        "type": "kruid"
+      },
+      {
+        "naam": "laurier",
+        "type": "kruid"
+      },
+      {
+        "naam": "fris fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "Franse eik",
+        "type": "hout"
+      },
+      {
+        "naam": "subtiel hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "neri-contrada-arrigo-etna-rosso-doc-2024": {
+    "primair": [
+      {
+        "naam": "rijp rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kers",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "ronding",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "neri-etna-bianco-doc-2025": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "neri-etna-rosato-doc-2025": {
+    "primair": [
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemige toets",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "neri-etna-rosso-doc-2024": {
+    "primair": [
+      {
+        "naam": "rijp rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "zoete kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "hout"
+      },
+      {
+        "naam": "frisse zuren",
+        "type": "zuivel"
+      },
+      {
+        "naam": "mineraliteit",
+        "type": "hout"
+      }
+    ]
+  },
+  "ornellaia-le-serre-nuove-2022": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte bes",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "specerijen",
+        "type": "kruid"
+      },
+      {
+        "naam": "geroosterd hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "ornellaia-le-volte-2023": {
+    "primair": [
+      {
+        "naam": "bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      }
+    ]
+  },
+  "plince-pomerol-2019": {
+    "primair": [
+      {
+        "naam": "rijpe bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "blauwe bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde lavendel",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cacao",
+        "type": "noot"
+      },
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ]
+  },
+  "podere-grattamacco-bolgheri-superiore-2019": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rozemarijn",
+        "type": "kruid"
+      },
+      {
+        "naam": "tijm",
+        "type": "kruid"
+      },
+      {
+        "naam": "laurier",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "balsem",
+        "type": "hout"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "franse barriques",
+        "type": "hout"
+      },
+      {
+        "naam": "zoute ondertoon",
+        "type": "mineraal"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "mineraal"
+      }
+    ]
+  },
+  "quinta-sao-giao-alvarinho-superior-2023": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidige toets",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "rokerige steen",
+        "type": "hout"
+      },
+      {
+        "naam": "fijne gistcellen",
+        "type": "zuivel"
+      },
+      {
+        "naam": "Frans eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "quinta-sao-giao-alvarinho-trajadura-grande-escolha-2024": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "wit fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "passievrucht",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zout",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtig",
+        "type": "hout"
+      }
+    ]
+  },
+  "quinta-sao-giao-espadeiro-rose-colheita-selecionada-2024": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": []
+  },
+  "quinta-sao-giao-espumante-bruto-millesime-2020": {
+    "primair": [
+      {
+        "naam": "citrusschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "toast",
+        "type": "hout"
+      },
+      {
+        "naam": "boterkoekje",
+        "type": "zuivel"
+      },
+      {
+        "naam": "geroosterde noten",
+        "type": "noot"
+      }
+    ]
+  },
+  "quinta-sao-giao-giao-branco-2025": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "limoen",
+        "type": "citrus"
+      },
+      {
+        "naam": "bloemige toets",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "frisheid",
+        "type": "hout"
+      }
+    ]
+  },
+  "quinta-sao-giao-giao-loureiro-2025": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "wit fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zoute ondertoon",
+        "type": "hout"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "hout"
+      }
+    ]
+  },
+  "quinta-sao-giao-giao-petillant-naturel-exclusive-edition-2020": {
+    "primair": [
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brood",
+        "type": "hout"
+      }
+    ]
+  },
+  "quinta-sao-giao-giao-rose-2025": {
+    "primair": [
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "wilde aardbeien",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemige toets",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "frisse zuren",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "quinta-sao-giao-quinta-sao-giao-alvarinho-barrica-2021": {
+    "primair": [
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "grapefruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "sinaasappelschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "mandarijn",
+        "type": "fruit"
+      },
+      {
+        "naam": "limoen",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "biscuit",
+        "type": "zuivel"
+      },
+      {
+        "naam": "witte peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "natte steen",
+        "type": "hout"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "quinta-sao-giao-quinta-sao-giao-branco-escolha-2024": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "grapefruit",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "hout"
+      }
+    ]
+  },
+  "quinta-sao-giao-vinhao-colheita-selecionada-2024": {
+    "primair": [
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte bes",
+        "type": "fruit"
+      },
+      {
+        "naam": "frisse",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "graniet",
+        "type": "hout"
+      }
+    ]
+  },
+  "ramonet-chassagne-montrachet-rouge-2019": {
+    "primair": [
+      {
+        "naam": "rijpe rode kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "aardse toon",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidig hout",
+        "type": "hout"
+      },
+      {
+        "naam": "subtiele complexiteit",
+        "type": "hout"
+      }
+    ]
+  },
+  "recioto-della-valpolicella-classico-d-o-c-g-2022": {
+    "primair": [
+      {
+        "naam": "gedroogde kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "vijgen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "scions-of-sinai-granietsteen-chenin-blanc-2024": {
+    "primair": [
+      {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrusbloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "geel fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "steenachtige toon",
+        "type": "mineraal"
+      },
+      {
+        "naam": "zilte lucht",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "oude vaten",
+        "type": "hout"
+      }
+    ]
+  },
+  "sn35-etna-spumante-doc-millesimato": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "gele perzik",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "gebak",
+        "type": "zoet"
+      },
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      }
+    ]
+  },
+  "stags-leap-s-l-v-2020": {
+    "primair": [
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cacao",
+        "type": "noot"
+      },
+      {
+        "naam": "houttonen",
+        "type": "hout"
+      }
+    ]
+  },
+  "te-mata-coleraine-2021": {
+    "primair": [
+      {
+        "naam": "zwarte bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "verse rozen",
+        "type": "bloem"
+      },
+      {
+        "naam": "tijm",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "cederhout",
+        "type": "hout"
+      },
+      {
+        "naam": "mokkatonen",
+        "type": "noot"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      },
+      {
+        "naam": "frans eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "tenuta-il-poggione-brunello-di-montalcino-2017": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "bramen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "leer",
+        "type": "hout"
+      },
+      {
+        "naam": "tabaksbladeren",
+        "type": "kruid"
+      }
+    ]
+  },
+  "tenuta-il-poggione-brunello-di-montalcino-2019": {
+    "primair": [
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "verwelkte rozen",
+        "type": "bloem"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "leer",
+        "type": "hout"
+      },
+      {
+        "naam": "kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "nootachtig",
+        "type": "noot"
+      },
+      {
+        "naam": "zout",
+        "type": "kruid"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-caprilius-2018": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde kruiden",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-costa-di-camenata-2025": {
+    "primair": [
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "rozenbottel",
+        "type": "fruit"
+      },
+      {
+        "naam": "kleine rode bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zilte afdronk",
+        "type": "zout"
+      },
+      {
+        "naam": "frisheid",
+        "type": "kruid"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-erboli-2022": {
+    "primair": [
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "groene appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte meloen",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romigheid",
+        "type": "zuivel"
+      },
+      {
+        "naam": "frisheid",
+        "type": "hout"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-orma-del-diavolo-2019": {
+    "primair": [
+      {
+        "naam": "vlierbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "mispel",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidige tonen",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "wierook",
+        "type": "kruid"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-poggio-ai-grilli-2023": {
+    "primair": [
+      {
+        "naam": "rode kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloedsinaasappelschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "aardse tonen",
+        "type": "kruid"
+      },
+      {
+        "naam": "frisse munt",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eucalyptus",
+        "type": "kruid"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-poggio-ai-grilli-2024": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloedsinaasappelschil",
+        "type": "citrus"
+      },
+      {
+        "naam": "rode fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "eucalyptus",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "aardse tonen",
+        "type": "aarde"
+      },
+      {
+        "naam": "gedroogde kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "frisse zuren",
+        "type": "zuur"
+      },
+      {
+        "naam": "tannines",
+        "type": "structuur"
+      },
+      {
+        "naam": "kruidige afdronk",
+        "type": "kruid"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-poggio-ai-grilli-riserva-2021": {
+    "primair": [
+      {
+        "naam": "zure kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruim",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "leer",
+        "type": "kruid"
+      },
+      {
+        "naam": "balsamico",
+        "type": "kruid"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-quarto-di-luna-2025": {
+    "primair": [
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "passievrucht",
+        "type": "fruit"
+      },
+      {
+        "naam": "gele perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemige tonen",
+        "type": "bloem"
+      },
+      {
+        "naam": "ziltige hint",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "fijne droesem",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "tenuta-san-jacopo-vigna-mulino-2020": {
+    "primair": [
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "rijp rood fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "balsamico",
+        "type": "kruid"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "terre-d-arenco-anastasia-2023": {
+    "primair": [
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemetjes",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "crème brûlée",
+        "type": "zuivel"
+      },
+      {
+        "naam": "cacaobonen",
+        "type": "noot"
+      },
+      {
+        "naam": "brood",
+        "type": "hout"
+      }
+    ]
+  },
+  "terre-d-arengo-bufera": {
+    "primair": [
+      {
+        "naam": "tomaat",
+        "type": "fruit"
+      },
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "specerijen",
+        "type": "kruid"
+      }
+    ]
+  },
+  "terre-d-arengo-le-fem-2025": {
+    "primair": [
+      {
+        "naam": "appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "lindebloesem",
+        "type": "bloem"
+      },
+      {
+        "naam": "meidoorn",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zout",
+        "type": "kruid"
+      }
+    ]
+  },
+  "terre-d-arengo-manto-pecorino-di-offida-2024": {
+    "primair": [
+      {
+        "naam": "Williams-peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "tropisch fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "fijne gistcellen",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "terre-d-arengo-pecorante-2023": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "cederappel",
+        "type": "fruit"
+      },
+      {
+        "naam": "ananas",
+        "type": "fruit"
+      },
+      {
+        "naam": "passievrucht",
+        "type": "fruit"
+      },
+      {
+        "naam": "bloemen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romige textuur",
+        "type": "zuivel"
+      },
+      {
+        "naam": "gistcellen",
+        "type": "hout"
+      },
+      {
+        "naam": "zoute ondertoon",
+        "type": "kruid"
+      },
+      {
+        "naam": "steenachtige ondertoon",
+        "type": "hout"
+      },
+      {
+        "naam": "frisheid",
+        "type": "kruid"
+      }
+    ]
+  },
+  "terre-d-arengo-quasi-arido-2023": {
+    "primair": [
+      {
+        "naam": "acacia",
+        "type": "bloem"
+      },
+      {
+        "naam": "rijpe peer",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "rook",
+        "type": "hout"
+      }
+    ]
+  },
+  "terre-d-arengo-savage-2021": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "rode roos",
+        "type": "bloem"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "cacao",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "balsamiek",
+        "type": "kruid"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "vanille",
+        "type": "hout"
+      },
+      {
+        "naam": "room",
+        "type": "zuivel"
+      },
+      {
+        "naam": "noten",
+        "type": "noot"
+      }
+    ]
+  },
+  "testamatta-2018": {
+    "primair": [
+      {
+        "naam": "bosbes",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "aarde",
+        "type": "kruid"
+      },
+      {
+        "naam": "steen",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "valpolicella-classico-d-o-c-2023": {
+    "primair": [
+      {
+        "naam": "zure kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rode rozen",
+        "type": "bloem"
+      },
+      {
+        "naam": "aalbes",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "bitteramandel",
+        "type": "noot"
+      }
+    ]
+  },
+  "valpolicella-ripasso-classico-d-o-c-2020": {
+    "primair": [
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "frambozen",
+        "type": "fruit"
+      },
+      {
+        "naam": "rode rozen",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "drop",
+        "type": "kruid"
+      },
+      {
+        "naam": "mossig",
+        "type": "kruid"
+      },
+      {
+        "naam": "eiken",
+        "type": "hout"
+      }
+    ]
+  },
+  "valpolicella-superiore-d-o-c-2023": {
+    "primair": [
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "wilde bessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogd fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      },
+      {
+        "naam": "amfora",
+        "type": "hout"
+      }
+    ]
+  },
+  "vantorosso-amarone-della-valpolicella-riserva-docg": {
+    "primair": [
+      {
+        "naam": "gedroogde kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "pruimenjam",
+        "type": "fruit"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "leer",
+        "type": "hout"
+      },
+      {
+        "naam": "donkere chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "espresso",
+        "type": "noot"
+      },
+      {
+        "naam": "bittere cacao",
+        "type": "noot"
+      },
+      {
+        "naam": "eikenhout",
+        "type": "hout"
+      }
+    ]
+  },
+  "vantorosso-amarone-di-valpolicella-2018": {
+    "primair": [
+      {
+        "naam": "gedroogde kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde pruimen",
+        "type": "fruit"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      },
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "bittere chocolade",
+        "type": "noot"
+      },
+      {
+        "naam": "gedroogde kruiden",
+        "type": "kruid"
+      }
+    ]
+  },
+  "vantorosso-vanni-bianco-2023": {
+    "primair": [
+      {
+        "naam": "kamille",
+        "type": "bloem"
+      },
+      {
+        "naam": "rijpe perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrusschil",
+        "type": "citrus"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "romigheid",
+        "type": "zuivel"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "vantorosso-vanni-rosso-veronese-2018": {
+    "primair": [
+      {
+        "naam": "gekookte kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "donker fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "koffie",
+        "type": "hout"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      }
+    ]
+  },
+  "vega-sicilia-pintia-2020-0-375": {
+    "primair": [
+      {
+        "naam": "braambes",
+        "type": "fruit"
+      },
+      {
+        "naam": "zwarte kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "zoethout",
+        "type": "kruid"
+      },
+      {
+        "naam": "cacao",
+        "type": "noot"
+      },
+      {
+        "naam": "gerookt vlees",
+        "type": "vlees"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "amfora",
+        "type": "hout"
+      },
+      {
+        "naam": "kruidigheid",
+        "type": "kruid"
+      }
+    ]
+  },
+  "vietti-barolo-castiglione-2018": {
+    "primair": [
+      {
+        "naam": "rode kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "gedroogde rozenblaadjes",
+        "type": "bloem"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "zoethout",
+        "type": "kruid"
+      },
+      {
+        "naam": "tabak",
+        "type": "kruid"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-cuvee-nature-tendance-rose": {
+    "primair": [
+      {
+        "naam": "aardbei",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      },
+      {
+        "naam": "bosaardbei",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "gist",
+        "type": "hout"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-cuvee-nature-tendre": {
+    "primair": [
+      {
+        "naam": "rijpe appel",
+        "type": "fruit"
+      },
+      {
+        "naam": "peer",
+        "type": "fruit"
+      },
+      {
+        "naam": "wit fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "bubbels",
+        "type": "zuivel"
+      },
+      {
+        "naam": "boterig deeg",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-cuvee-nature-tresor": {
+    "primair": [
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      },
+      {
+        "naam": "gedroogd fruit",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "room",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-cuvee-petit-louis-2023": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "rood fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "kaneel",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-cuvee-serres-moi": {
+    "primair": [
+      {
+        "naam": "kers",
+        "type": "fruit"
+      },
+      {
+        "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "braam",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "toast",
+        "type": "hout"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-cuvee-serres-moi-2024": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "fruit"
+      },
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "brioche",
+        "type": "brood"
+      },
+      {
+        "naam": "vanille",
+        "type": "zuivel"
+      },
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-petit-louis-2024": {
+    "primair": [
+      {
+        "naam": "citroen",
+        "type": "citrus"
+      },
+      {
+        "naam": "witte bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "perzik",
+        "type": "fruit"
+      },
+      {
+        "naam": "peer",
+        "type": "fruit"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      }
+    ]
+  },
+  "vignoble-nicolas-therez-serres-moi-2021": {
+    "primair": [
+      {
+        "naam": "wit fruit",
+        "type": "fruit"
+      },
+      {
+        "naam": "citrus",
+        "type": "citrus"
+      },
+      {
+        "naam": "hazelnoot",
+        "type": "noot"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "hout",
+        "type": "hout"
+      },
+      {
+        "naam": "gist",
+        "type": "zuivel"
+      }
+    ]
+  },
+  "ygay-gran-reserva-2011": {
+    "primair": [
+      {
+        "naam": "rijpe kersen",
+        "type": "fruit"
+      },
+      {
+        "naam": "bosbessen",
+        "type": "fruit"
+      },
+      {
+        "naam": "cassis",
+        "type": "fruit"
+      },
+      {
+        "naam": "mediterrane kruiden",
+        "type": "kruid"
+      },
+      {
+        "naam": "zwarte peper",
+        "type": "kruid"
+      }
+    ],
+    "secundair": [
+      {
+        "naam": "kruidnagel",
+        "type": "kruid"
+      },
+      {
+        "naam": "mokka",
+        "type": "hout"
+      },
+      {
+        "naam": "Frans eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "Amerikaans eiken",
+        "type": "hout"
+      },
+      {
+        "naam": "beton",
+        "type": "hout"
+      }
+    ]
+  }
+}
