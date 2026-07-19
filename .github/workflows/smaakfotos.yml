@@ -6,7 +6,7 @@ on:
       batch_size:
         description: "Aantal flessen per run (kostenbeheersing)"
         type: choice
-        options: ["1", "10"]
+        options: ["1", "10", "25"] 
         default: "1"
       handle:
         description: "1 specifieke fles (URL-slug). Ingevuld = alleen deze fles"
