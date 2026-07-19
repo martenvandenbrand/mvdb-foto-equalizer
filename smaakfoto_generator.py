@@ -50,7 +50,8 @@ DONE_TAG       = env("DONE_TAG", "smaakfoto")
 DRY_RUN        = env_bool("DRY_RUN", True)       # genereert wel (OpenAI-kosten), upload/tagt niet
 BACKUP_DIR     = pathlib.Path("backup_smaak")
 CACHE_DIR      = pathlib.Path("flavor_cache")    # hergebruikte smaak-uitsnedes
-META_DIR       = pathlib.Path("flavor_meta")     # gecachete smaak-extractie per product-handle
+META_FILE      = pathlib.Path("flavor_meta.json") # gecachete smaak-extractie (alle producten in 1 bestand)
+_LEGACY_META_DIR = pathlib.Path("flavor_meta")    # oude losse bestanden (worden eenmalig ingelezen)
 # ======================================================================================
 
 API_URL   = f"https://{SHOP}/admin/api/{API_VERSION}/graphql.json"
@@ -161,17 +162,35 @@ FLAVOR_SYS = (
     "elementen. Maximaal 5 primair en 5 secundair."
 )
 
+def _load_meta():
+    if META_FILE.exists():
+        try:
+            return json.loads(META_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    merged = {}                                   # eenmalige migratie van oude losse bestanden
+    if _LEGACY_META_DIR.exists():
+        for f in _LEGACY_META_DIR.glob("*.json"):
+            try:
+                merged[f.stem] = json.loads(f.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+    return merged
+
+def _save_meta(meta):
+    META_FILE.write_text(json.dumps(meta, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
 def extract_flavors(handle, description):
-    """Smaken per product; gecachet in de repo (flavor_meta/<handle>.json) -> rerun = geen tekst-call."""
-    META_DIR.mkdir(exist_ok=True)
-    fp = META_DIR / f"{_slug(handle)}.json"
-    if fp.exists() and not BYPASS_CACHE:
-        data = json.loads(fp.read_text(encoding="utf-8"))
-        return data.get("primair", []), data.get("secundair", [])
+    """Smaken per product; gecachet in flavor_meta.json (alle producten) -> rerun = geen tekst-call."""
+    meta = _load_meta()
+    if handle in meta and not BYPASS_CACHE:
+        e = meta[handle]
+        return e.get("primair", []), e.get("secundair", [])
     prim, sec = _extract_flavors_api(description)
     if prim or sec:
-        fp.write_text(json.dumps({"primair": prim, "secundair": sec}, ensure_ascii=False, indent=2),
-                      encoding="utf-8")
+        meta = _load_meta()                        # herlaad vlak voor schrijven -> jouw edits blijven behouden
+        meta[handle] = {"primair": prim, "secundair": sec}
+        _save_meta(meta)
     return prim, sec
 
 def _extract_flavors_api(description):
