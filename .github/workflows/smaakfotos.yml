@@ -31,6 +31,10 @@ on:
         type: choice
         options: ["220", "260", "320", "400", "480", "560"]
         default: "260"
+      merge_colors:
+        description: "Kleur/rijpheid samenvoegen (rode+zwarte kers -> kers) — goedkoper"
+        type: boolean
+        default: true
       cutout_source:
         description: "Bron van de smaakbeelden"
         type: choice
@@ -71,6 +75,7 @@ jobs:
           OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
           IMAGE_QUALITY: ${{ inputs.image_quality }}
           FLAVOR_PX: ${{ inputs.flavor_size }}
+          MERGE_COLOR_VARIANTS: ${{ inputs.merge_colors }}
           CUTOUT_SOURCE: ${{ inputs.cutout_source }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           BYPASS_CACHE: ${{ inputs.bypass_cache }}
