@@ -90,3 +90,15 @@ Pexels opgehaald en wordt de achtergrond weggeknipt (rembg).
   gpt en stock botsen niet en wisselen heeft meteen effect. Bevalt een uitsnede niet,
   verwijder dat ene bestand en draai opnieuw. Oude bestanden zonder achtervoegsel
   (van vóór deze wijziging) mag je weggooien.
+
+### Smaken samenvoegen (goedkoper genereren)
+`synonyms.json` mapt smaakvarianten naar één canonieke smaak, zodat bijna-identieke
+smaken dezelfde uitsnede delen (minder generaties = lagere kosten). Twee secties:
+- **`merge`**: altijd toegepast — meervoud/spelling, synoniemen (citrus→citroen,
+  eiken→eikenhout), en abstracte sensaties (structuur, frisheid) die vervallen.
+- **`merge_colors`**: alleen als `merge_colors` aan staat — kleur/rijpheid
+  (rode+zwarte kers → kers, witte+gele perzik → perzik).
+
+Het script canoniseert en ontdubbelt per wijn vóór het genereren. Wil je een
+samenvoeging anders, pas `synonyms.json` aan. Voor deze catalogus: 381 → ~130
+unieke smaken (veilig), ~111 met kleur erbij.

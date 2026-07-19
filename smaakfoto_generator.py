@@ -38,6 +38,8 @@ CUTOUT_SOURCE  = env("CUTOUT_SOURCE", "gpt")     # gpt = genereren | stock = ech
 PEXELS_API_KEY = env("PEXELS_API_KEY", "")       # alleen nodig bij CUTOUT_SOURCE=stock
 BYPASS_CACHE   = env_bool("BYPASS_CACHE", False)  # True = cache negeren en verse uitsnede maken (ook bij gpt)
 BG_COLOR_HEX   = env("BG_COLOR_HEX", "#EFF0F5")    # achtergrondkleur voor modellen zonder transparant (gpt-image-2), wordt weer weggeknipt
+SYN_FILE       = pathlib.Path("synonyms.json")    # variant -> canonieke smaak (bespaart generaties)
+MERGE_COLOR_VARIANTS = env_bool("MERGE_COLOR_VARIANTS", True)  # ook kleur/rijpheid samenvoegen (rode+zwarte kers -> kers)
 
 FINAL_SIZE     = env_int("FINAL_SIZE", 2048)     # canvas (vierkant)
 BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
@@ -179,6 +181,40 @@ def _load_meta():
 
 def _save_meta(meta):
     META_FILE.write_text(json.dumps(meta, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+_SYN = None
+def _load_synonyms():
+    if not SYN_FILE.exists():
+        return {}
+    d = json.loads(SYN_FILE.read_text(encoding="utf-8"))
+    m = dict(d.get("merge", {}))
+    if MERGE_COLOR_VARIANTS:
+        m.update(d.get("merge_colors", {}))
+    return m
+
+def _canonical(naam):
+    """Map een smaaknaam naar zijn canonieke vorm (''=laten vallen). Volgt ketens als 'zwarte kersen'->'kers'."""
+    global _SYN
+    if _SYN is None:
+        _SYN = _load_synonyms()
+    key = (naam or "").strip().lower()
+    for _ in range(5):
+        if key in _SYN:
+            key = _SYN[key]
+        else:
+            break
+    return key
+
+def _prep_flavors(prim, sec):
+    """Canoniseer namen, laat abstracte smaken vallen en ontdubbel per wijn (primair heeft voorrang)."""
+    seen = set(); out_p = []; out_s = []
+    for side, out in ((prim, out_p), (sec, out_s)):
+        for it in side:
+            c = _canonical(it.get("naam", ""))
+            if not c or c in seen:
+                continue
+            seen.add(c); out.append({"naam": c, "type": it.get("type", "")})
+    return out_p, out_s
 
 def extract_flavors(handle, description):
     """Smaken per product; gecachet in flavor_meta.json (alle producten) -> rerun = geen tekst-call."""
@@ -378,8 +414,9 @@ def main():
     for p in products:
         try:
             prim, sec = extract_flavors(p["handle"], p.get("description"))
+            prim, sec = _prep_flavors(prim, sec)
             if not prim and not sec:
-                print(f"[skip] {p['handle']}: geen smaken in beschrijving"); continue
+                print(f"[skip] {p['handle']}: geen (bruikbare) smaken in beschrijving"); continue
             prim, sec = _balance(prim, sec)
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
             final = compose(Image.open(io.BytesIO(raw)), prim, sec, seed=zlib.crc32(p["handle"].encode()))
