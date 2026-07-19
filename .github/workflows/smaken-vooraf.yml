@@ -1,0 +1,47 @@
+name: Smaken vooraf genereren
+
+# Maakt voor ALLE producten flavor_meta/<handle>.json aan (alleen extractie),
+# zodat je de smaken vooraf kunt nalopen en aanpassen in de repo.
+on:
+  workflow_dispatch:
+    inputs:
+      bypass_cache:
+        description: "Bestaande JSON's negeren en alle smaken opnieuw bepalen"
+        type: boolean
+        default: false
+
+jobs:
+  smaken-vooraf:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+
+      - name: Genereer smaken
+        env:
+          SHOP: ${{ secrets.SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BYPASS_CACHE: ${{ inputs.bypass_cache }}
+        run: python smaken_vooraf.py
+
+      - name: Commit smaken naar de repo
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add flavor_meta.json
+          if git diff --cached --quiet; then
+            echo "Geen nieuwe of gewijzigde smaken om te committen."
+          else
+            git commit -m "Smaken vooraf gegenereerd [skip ci]"
+            git pull --rebase --autostash
+            git push
+          fi
