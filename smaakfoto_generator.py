@@ -462,13 +462,13 @@ def _new_canvas():
     fill = (_hex_rgb(BG_COLOR_HEX) + (255,)) if "image-2" in OPENAI_IMAGE_MODEL else (0, 0, 0, 0)
     return Image.new("RGBA", (N, N), fill)
 
-def _place_cutout(cv, it, cx, cy, size, angle, shadow=True):
+def _place_cutout(cv, it, cx, cy, size, angle, shadow=True, shadow_blur=18, shadow_opacity=90, shadow_offset=(10, 22)):
     cut = _fit(get_flavor_cutout(it["naam"], it.get("type", "")), size)
     if angle:
         cut = cut.rotate(angle, expand=True, resample=Image.BICUBIC)
     x, y = cx - cut.width // 2, cy - cut.height // 2
     if shadow:
-        sh, pad = _drop_shadow(cut)
+        sh, pad = _drop_shadow(cut, blur=shadow_blur, opacity=shadow_opacity, offset=shadow_offset)
         cv.alpha_composite(sh, (x - pad, y - pad))
     cv.alpha_composite(cut, (x, y))
 
@@ -636,31 +636,82 @@ def _compose_geometrisch(cv, bottle, prim, sec, seed):
     cv.alpha_composite(lay)
     _paste_bottle(cv, bottle)
 
+def _cloud_variant(cloud, seed):
+    """Per wijn een unieke variant van dezelfde wolk: spiegeling, lichte schaal en rotatie."""
+    rnd = random.Random(seed)
+    if rnd.random() < 0.5:
+        cloud = cloud.transpose(Image.FLIP_LEFT_RIGHT)
+    scale = rnd.uniform(0.93, 1.08)
+    w, h = cloud.size
+    cloud = cloud.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.LANCZOS)
+    angle = rnd.uniform(-6, 6)
+    if angle:
+        cloud = cloud.rotate(angle, expand=True, resample=Image.BICUBIC)
+    return cloud
+
+def _alpha_at(img, x, y):
+    if 0 <= x < img.width and 0 <= y < img.height:
+        return img.getpixel((x, y))[3]
+    return 0
+
+def _gold_speckles(cv, cloud, cloud_pos, seed, n=16):
+    from PIL import ImageDraw
+    rnd = random.Random(seed + 999)
+    d = ImageDraw.Draw(cv)
+    a = cloud.getchannel("A")
+    ox, oy = cloud_pos
+    tries = 0; placed = 0
+    while placed < n and tries < n * 12:
+        tries += 1
+        lx = rnd.randint(0, cloud.width - 1); ly = rnd.randint(0, cloud.height - 1)
+        if a.getpixel((lx, ly)) < 25:                # net buiten/aan de rand van de nevel
+            continue
+        x, y = ox + lx, oy + ly
+        r = rnd.uniform(2.5, 6.5)
+        op = rnd.randint(90, 190)
+        d.ellipse([x - r, y - r, x + r, y + r], fill=(214, 178, 96, op))
+        placed += 1
+
 def _compose_aromawolk(cv, bottle, prim, sec, seed):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = _wine_color(bottle)
-    cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
+    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
+    cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
     bp = _bottle_px()
-    # flesgeometrie vooraf, zodat cutouts de flescolom kunnen mijden
     b = _trim(bottle); bw, bh = b.size
     nw = max(1, round(bw * bp / bh))
     bottle_top = N - 40 - bp
-    cloud_cx, cloud_cy = N // 2, max(cloud.height // 2 + 20, bottle_top - cloud.height // 2 + int(N*0.06))
-    cv.alpha_composite(cloud, (cloud_cx - cloud.width // 2, cloud_cy - cloud.height // 2))
+    cloud_cx = N // 2
+    cloud_cy = max(cloud.height // 2 + 20, bottle_top - int(cloud.height * 0.44) + int(N * 0.06))
+    cloud_pos = (cloud_cx - cloud.width // 2, cloud_cy - cloud.height // 2)
+    cv.alpha_composite(cloud, cloud_pos)
+    _gold_speckles(cv, cloud, cloud_pos, seed)
+
     items = _by_type(prim + sec)
     top = cloud_cy - int(cloud.height * 0.42)
-    bottom = bottle_top + int(bp * 0.12)                    # tot net onder de flesmond
+    bottom = bottle_top + int(bp * 0.12)
     band = max((bottom - top) / max(len(items), 1), 1)
     for i, it in enumerate(items):
         size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
-        side = -1 if i % 2 == 0 else 1                       # links/rechts afwisselen
-        cy = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.15, band * 0.15))
-        cx = int(cloud_cx + side * rnd.uniform(0.16, 0.40) * cloud.width)
-        if cy + size // 2 > bottle_top:                      # naast de hals? -> volledig buiten de flescolom
-            min_off = nw // 2 + size // 2 + 24
-            if abs(cx - N // 2) < min_off:
-                cx = N // 2 + side * min_off
-        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20), shadow=False)
+        side = -1 if i % 2 == 0 else 1
+        cy0 = int(top + band * (i + 0.5))
+        best = None; best_score = -1
+        for _ in range(24):                                 # alleen posities waar echt wolk zit
+            cy = int(cy0 + rnd.uniform(-band * 0.28, band * 0.28))
+            cx = int(cloud_cx + side * rnd.uniform(0.14, 0.42) * cloud.width)
+            if cy + size // 2 > bottle_top:
+                min_off = nw // 2 + size // 2 + 24
+                if abs(cx - N // 2) < min_off:
+                    cx = N // 2 + side * min_off
+            lx, ly = cx - cloud_pos[0], cy - cloud_pos[1]
+            score = _alpha_at(cloud, lx, ly)
+            if score > best_score:
+                best_score, best = score, (cx, cy)
+            if score > 140:                                 # ruim voldoende wolk -> meteen goed genoeg
+                break
+        cx, cy = best
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
+                      shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
     _paste_bottle(cv, bottle)
 
 def _compose_kleurverloop(cv, bottle, prim, sec, seed):
