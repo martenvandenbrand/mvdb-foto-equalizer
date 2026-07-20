@@ -15,7 +15,7 @@ on:
       aroma_stijl:
         description: "Stijl van de smaakfoto"
         type: choice
-        options: ["kolommen", "krans", "explosie", "geometrisch", "aromawolk", "kleurverloop", "rook"]
+        options: ["kolommen", "krans", "explosie", "geometrisch", "constellatie", "aromawolk", "kleurverloop", "rook"]
         default: "kolommen"
       overwrite:
         description: "Bestaande smaakfoto's vervangen (selecteert producten MET de tag)"
