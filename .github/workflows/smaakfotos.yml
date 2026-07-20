@@ -6,12 +6,21 @@ on:
       batch_size:
         description: "Aantal flessen per run (kostenbeheersing)"
         type: choice
-        options: ["1", "10", "25", "50", "100"] 
+        options: ["1", "10"]
         default: "1"
       handle:
         description: "1 specifieke fles (URL-slug). Ingevuld = alleen deze fles"
         type: string
         default: ""
+      aroma_stijl:
+        description: "Stijl van de smaakfoto"
+        type: choice
+        options: ["kolommen", "krans", "explosie", "geometrisch", "aromawolk", "kleurverloop", "rook"]
+        default: "kolommen"
+      overwrite:
+        description: "Bestaande smaakfoto's vervangen (selecteert producten MET de tag)"
+        type: boolean
+        default: false
       dry_run:
         description: "Dry-run: wel genereren (kost credits) + artifact, niet uploaden/taggen"
         type: boolean
@@ -35,11 +44,6 @@ on:
         description: "Kleur/rijpheid samenvoegen (rode+zwarte kers -> kers) — goedkoper"
         type: boolean
         default: true
-      cutout_source:
-        description: "Bron van de smaakbeelden"
-        type: choice
-        options: ["gpt", "stock"]
-        default: "gpt"
       bypass_cache:
         description: "Cache negeren en smaken opnieuw maken (ook bij gpt)"
         type: boolean
@@ -60,7 +64,7 @@ jobs:
 
       # Nodig voor stock-modus én voor gpt-image-2 (achtergrond wegknippen)
       - name: Installeer rembg
-        if: ${{ inputs.cutout_source == 'stock' || inputs.image_model == 'gpt-image-2' }}
+        if: ${{ inputs.image_model == 'gpt-image-2' }}
         run: pip install rembg onnxruntime
 
       - name: Genereer smaakfoto's
@@ -76,7 +80,8 @@ jobs:
           IMAGE_QUALITY: ${{ inputs.image_quality }}
           FLAVOR_PX: ${{ inputs.flavor_size }}
           MERGE_COLOR_VARIANTS: ${{ inputs.merge_colors }}
-          CUTOUT_SOURCE: ${{ inputs.cutout_source }}
+          AROMA_STYLE: ${{ inputs.aroma_stijl }}
+          OVERWRITE: ${{ inputs.overwrite }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           BYPASS_CACHE: ${{ inputs.bypass_cache }}
         run: python smaakfoto_generator.py
