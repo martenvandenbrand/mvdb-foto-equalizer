@@ -584,15 +584,35 @@ def _compose_explosie(cv, bottle, prim, sec, seed):
     N = cv.size[0]; items = prim + sec
     rnd = random.Random(seed)
     bp = _bottle_px()
-    neck = (N // 2, N - 40 - bp + int(bp * 0.06))          # rond de flessenhals
-    placed = items + items                                  # elk 2x: 1 groot, 1 klein -> vollere burst
-    for i, it in enumerate(placed):
-        big = i < len(items)
-        a = math.radians(rnd.uniform(200, 340))             # bovenste helft
-        r = rnd.uniform(0.10, 0.34) * N if big else rnd.uniform(0.22, 0.42) * N
-        cx = int(neck[0] + r * math.cos(a)); cy = int(neck[1] + r * math.sin(a))
-        size = int(FLAVOR_PX * (rnd.uniform(0.85, 1.1) if big else rnd.uniform(0.45, 0.6)))
-        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-30, 30), shadow=big)
+    neck = (N // 2, N - 40 - bp + int(bp * 0.04))           # rond de flessenhals
+    max_r = neck[1] - int(N * 0.05)                          # tot vlak onder de bovenrand
+    placed = []                                              # (cx, cy, size) voor botsingscontrole
+
+    def try_place(it, size, r_lo, r_hi):
+        best = None; best_d = -1e18
+        for _ in range(90):
+            a = math.radians(rnd.uniform(195, 345))          # bovenste helft
+            r = rnd.uniform(r_lo, r_hi) * max_r
+            cx = int(neck[0] + r * math.cos(a)); cy = int(neck[1] + r * math.sin(a))
+            cx = max(size // 2 + 20, min(N - size // 2 - 20, cx))
+            cy = max(size // 2 + 20, min(neck[1] - size // 4, cy))
+            d = min((math.hypot(cx - px, cy - py) - (size + ps) * 0.50
+                     for px, py, ps in placed), default=1e9)
+            if d >= 0:                                        # geen overlap -> meteen goed
+                placed.append((cx, cy, size)); return cx, cy
+            if d > best_d:
+                best_d, best = d, (cx, cy)
+        placed.append((best[0], best[1], size)); return best  # minst overlappende plek
+
+    order = _by_type(items)
+    for it in order:                                          # groot, dicht bij de hals
+        size = int(FLAVOR_PX * rnd.uniform(0.85, 1.05))
+        cx, cy = try_place(it, size, 0.18, 0.55)
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-25, 25))
+    for it in order:                                          # klein, verder naar buiten
+        size = int(FLAVOR_PX * rnd.uniform(0.40, 0.55))
+        cx, cy = try_place(it, size, 0.55, 0.95)
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-35, 35), shadow=False)
     _paste_bottle(cv, bottle)
 
 def _compose_geometrisch(cv, bottle, prim, sec, seed):
