@@ -566,10 +566,17 @@ def _compose_krans(cv, bottle, prim, sec, seed):
     N = cv.size[0]; items = _by_type(prim + sec); n = max(len(items), 1)
     rnd = random.Random(seed)
     rx, ry = N * 0.36, N * 0.38
-    for i, it in enumerate(items):
+    for i, it in enumerate(items):                            # hoofdring
         a = -math.pi / 2 + 2 * math.pi * i / n
         cx = int(N / 2 + rx * math.cos(a)); cy = int(N / 2 + ry * math.sin(a))
         _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.75, 1.0)), rnd.uniform(-14, 14))
+    for i in range(n):                                        # verdichting: kleine herhalingen ertussen
+        it = items[(i + 2) % n]                               # ander item dan de buren
+        a = -math.pi / 2 + 2 * math.pi * (i + 0.5) / n
+        f = rnd.uniform(0.88, 1.10)                           # afwisselend iets binnen/buiten de ring
+        cx = int(N / 2 + rx * f * math.cos(a)); cy = int(N / 2 + ry * f * math.sin(a))
+        _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.38, 0.50)),
+                      rnd.uniform(-25, 25), shadow=False)
     _paste_bottle(cv, bottle)
 
 def _compose_explosie(cv, bottle, prim, sec, seed):
