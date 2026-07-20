@@ -67,6 +67,7 @@ STYLES = {
     "krans":       {"bottle_px": 1200, "anchor": "center"},
     "explosie":    {"bottle_px": 1250, "anchor": "bottom"},
     "geometrisch": {"bottle_px": 1500, "anchor": "center"},
+    "constellatie":{"bottle_px": 1500, "anchor": "center"},
     "aromawolk":   {"bottle_px": 1250, "anchor": "bottom"},
     "kleurverloop":{"bottle_px": 1300, "anchor": "bottom"},
     "rook":        {"bottle_px": 1300, "anchor": "bottom"},
@@ -690,7 +691,79 @@ _COMPOSERS = {
     "kolommen": _compose_kolommen, "krans": _compose_krans, "explosie": _compose_explosie,
     "geometrisch": _compose_geometrisch, "aromawolk": _compose_aromawolk,
     "kleurverloop": _compose_kleurverloop, "rook": _compose_rook,
+    "constellatie": None,   # hieronder gezet (functie volgt)
 }
+
+INK = (95, 75, 60)   # sepia-inkt
+
+def _sketch(im, ink=INK, blur_frac=0.02, boost=2.6):
+    """Foto-cutout -> lijntekening, puur Pillow (difference-of-gaussians). Gratis en deterministisch."""
+    from PIL import ImageOps, ImageChops
+    im = im.convert("RGBA")
+    alpha = im.getchannel("A")
+    gray = im.convert("L")
+    r = max(2, int(min(im.size) * blur_frac))
+    blur = gray.filter(ImageFilter.GaussianBlur(r))
+    lines = ImageChops.add(ImageChops.subtract(blur, gray), ImageChops.subtract(gray, blur))
+    lines = lines.point(lambda p: min(255, int(p * boost))).filter(ImageFilter.SMOOTH)
+    line_alpha = ImageChops.multiply(lines, alpha)
+    out = Image.new("RGBA", im.size, (0, 0, 0, 0))
+    out = Image.composite(Image.new("RGBA", im.size, ink + (255,)), out, line_alpha)
+    out.putalpha(line_alpha)
+    return out
+
+def _dotted_line(d, p1, p2, color, dot=5, gap=26):
+    import math
+    dist = math.hypot(p2[0] - p1[0], p2[1] - p1[1])
+    steps = max(int(dist / gap), 1)
+    for s in range(steps + 1):
+        t = s / steps
+        x = p1[0] + (p2[0] - p1[0]) * t; y = p1[1] + (p2[1] - p1[1]) * t
+        d.ellipse([x - dot/2, y - dot/2, x + dot/2, y + dot/2], fill=color)
+
+def _compose_constellatie(cv, bottle, prim, sec, seed):
+    from PIL import ImageDraw
+    N = cv.size[0]; rnd = random.Random(seed)
+    items = _by_type(prim + sec)
+    bp = _bottle_px()
+    b = _trim(bottle); nw = max(1, round(b.size[0] * bp / b.size[1]))
+    col_l, col_r = N // 2 - nw // 2 - 40, N // 2 + nw // 2 + 40
+    d = ImageDraw.Draw(cv)
+    ink = INK + (230,); gold = (196, 160, 90, 220)
+    f = _font(40, "-Bold")
+    size = int(FLAVOR_PX * 0.95)
+    # posities: links/rechts afwisselend, verticaal verdeeld, buiten de flescolom
+    pts = []
+    top, bottom = int(N * 0.10), int(N * 0.88)
+    band = (bottom - top) / max(len(items), 1)
+    for i, it in enumerate(items):
+        side = -1 if i % 2 == 0 else 1
+        cy = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.12, band * 0.12))
+        off = rnd.uniform(0.20, 0.36) * N
+        cx = int(N / 2 + side * off)
+        cx = min(col_l - size // 2, cx) if side < 0 else max(col_r + size // 2, cx)
+        cx = max(size // 2 + 30, min(N - size // 2 - 30, cx))
+        pts.append((it, cx, cy))
+    # sterrenlijnen: per kant een ketting (kruist de fles niet)
+    for side_pts in ([p for i, p in enumerate(pts) if i % 2 == 0],
+                     [p for i, p in enumerate(pts) if i % 2 == 1]):
+        for (_, x1, y1), (_, x2, y2) in zip(side_pts, side_pts[1:]):
+            _dotted_line(d, (x1, y1), (x2, y2), gold)
+    for _ in range(10):                                       # losse sterretjes
+        sx = rnd.randint(int(N*0.06), int(N*0.94)); sy = rnd.randint(int(N*0.06), int(N*0.90))
+        if col_l - 30 < sx < col_r + 30: continue
+        r = rnd.randint(4, 9)
+        d.ellipse([sx-r, sy-r, sx+r, sy+r], fill=gold)
+    # iconen (geschetste cutouts) + label eronder
+    for it, cx, cy in pts:
+        icon = _fit(_sketch(get_flavor_cutout(it["naam"], it.get("type", ""))), size)
+        cv.alpha_composite(icon, (cx - icon.width // 2, cy - icon.height // 2))
+        label = it["naam"].upper()
+        tw = d.textlength(label, font=f)
+        d.text((cx - tw / 2, cy + icon.height // 2 + 14), label, font=f, fill=ink)
+    _paste_bottle(cv, bottle)
+
+_COMPOSERS["constellatie"] = _compose_constellatie
 
 def compose(bottle_img, prim, sec, seed=0):
     cv = _new_canvas()

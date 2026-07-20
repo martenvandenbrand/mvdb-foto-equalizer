@@ -67,6 +67,7 @@ def main():
 
     # 2. cache snoeien: behoud alleen canonieke -gpt/-<tag>.png
     keep = {f"{slug(c)}{suf}" for c in needed}
+    keep |= {f.name for f in CACHE.glob("asset-*.png")}   # sfeer-assets (wolk/linten/rook) behouden
     removed = 0
     for f in sorted(CACHE.glob("*.png")):
         if f.name not in keep:
