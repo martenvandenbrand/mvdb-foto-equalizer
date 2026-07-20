@@ -674,6 +674,62 @@ def _gold_speckles(cv, cloud, cloud_pos, seed, kleur="rood", n=16):
         d.ellipse([x - r, y - r, x + r, y + r], fill=color + (op,))
         placed += 1
 
+def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, max_r=None):
+    """Absolute allerlaatste redmiddel: dichtstbijzijnde punt met echte wolk-verf, rondom een gok."""
+    a = cloud.getchannel("A")
+    lx0, ly0 = cx_guess - cloud_pos[0], cy_guess - cloud_pos[1]
+    max_r = max_r or max(cloud.size)
+    for r in range(0, max_r, step):
+        for dx in range(-r, r + 1, step):
+            for dy in (-r, r) if r else (0,):
+                lx, ly = lx0 + dx, ly0 + dy
+                if 0 <= lx < cloud.width and 0 <= ly < cloud.height and a.getpixel((lx, ly)) >= threshold:
+                    return cloud_pos[0] + lx, cloud_pos[1] + ly
+            for dy in range(-r, r + 1, step):
+                for dx in (-r, r) if r else (0,):
+                    lx, ly = lx0 + dx, ly0 + dy
+                    if 0 <= lx < cloud.width and 0 <= ly < cloud.height and a.getpixel((lx, ly)) >= threshold:
+                        return cloud_pos[0] + lx, cloud_pos[1] + ly
+    return cx_guess, cy_guess                                  # geen enkel pixel gevonden (lege wolk) -> gok blijft staan
+
+def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_step=4,
+                      y_radii=(0, 8, 20, 40, 80, 150, 260)):
+    """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte."""
+    a = cloud.getchannel("A")
+    for r in y_radii:
+        for ly in ({ly_target} if r == 0 else {ly_target - r, ly_target + r}):
+            if not (0 <= ly < cloud.height):
+                continue
+            row = [lx for lx in range(0, cloud.width, x_step) if a.getpixel((lx, ly)) >= threshold]
+            if not row:
+                continue
+            def ok(c):
+                if excl and excl[0] < c < excl[1]:
+                    return False
+                return (c < half) if side < 0 else (c >= half)
+            pref = [c for c in row if ok(c)]
+            chosen = pref or [c for c in row if not (excl and excl[0] < c < excl[1])] or row
+            if chosen:
+                return rnd.choice(chosen), ly
+    return None, ly_target
+
+def _label_line(cv, cx, cy, side, size, naam, rnd):
+    """Dun lijntje van de smaak naar een klein tekstlabel, weg van de fles."""
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(cv)
+    ink = (95, 75, 60, 235)
+    f = _font(34, "-Bold")
+    length = rnd.uniform(70, 110)
+    sx, sy = cx + side * (size // 2 + 4), cy + rnd.uniform(-6, 6)
+    ex, ey = sx + side * length, sy + rnd.uniform(-14, 14)
+    d.line([(sx, sy), (ex, ey)], fill=ink, width=2)
+    label = naam.upper()
+    tw = d.textlength(label, font=f)
+    tx = ex + 8 if side > 0 else ex - 8 - tw
+    N = cv.size[0]
+    tx = max(14, min(N - 14 - tw, tx))
+    d.text((tx, ey - 15), label, font=f, fill=ink)
+
 def _compose_aromawolk(cv, bottle, prim, sec, seed):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = _wine_color(bottle)
@@ -696,24 +752,22 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed):
     for i, it in enumerate(items):
         size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
         side = -1 if i % 2 == 0 else 1
-        cy0 = int(top + band * (i + 0.5))
-        best = None; best_score = -1
-        for _ in range(24):                                 # alleen posities waar echt wolk zit
-            cy = int(cy0 + rnd.uniform(-band * 0.28, band * 0.28))
-            cx = int(cloud_cx + side * rnd.uniform(0.14, 0.42) * cloud.width)
-            if cy + size // 2 > bottle_top:
-                min_off = nw // 2 + size // 2 + 24
-                if abs(cx - N // 2) < min_off:
-                    cx = N // 2 + side * min_off
-            lx, ly = cx - cloud_pos[0], cy - cloud_pos[1]
-            score = _alpha_at(cloud, lx, ly)
-            if score > best_score:
-                best_score, best = score, (cx, cy)
-            if score > 140:                                 # ruim voldoende wolk -> meteen goed genoeg
-                break
-        cx, cy = best
+        cy_target = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.15, band * 0.15))
+        half = cloud.width // 2
+        excl = None
+        if cy_target + size // 2 > bottle_top:                 # nabij de hals: fles-kolom uitsluiten
+            min_off = nw // 2 + size // 2 + 24
+            excl = (cloud_cx - min_off - cloud_pos[0], cloud_cx + min_off - cloud_pos[0])
+        lx, ly = _find_cloud_point(cloud, rnd, cy_target - cloud_pos[1], side, half, excl)
+        if lx is not None:
+            cx, cy = cloud_pos[0] + lx, cloud_pos[1] + ly
+        else:                                                   # allerlaatste redmiddel: dichtstbijzijnde wolk waar dan ook
+            cx, cy = _nearest_paint(cloud, cloud_pos,
+                                    cx_guess=cloud_cx + side * int(0.20 * cloud.width), cy_guess=cy_target)
+        cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                       shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
+        _label_line(cv, cx, cy, side, size, it["naam"], rnd)
     _paste_bottle(cv, bottle)
 
 def _compose_kleurverloop(cv, bottle, prim, sec, seed):
