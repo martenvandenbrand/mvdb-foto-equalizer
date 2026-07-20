@@ -536,6 +536,20 @@ def _font(size, variant=""):
         from PIL import ImageFont
         return ImageFont.load_default()
 
+def _script_font(size):
+    """Handschrift-lettertype voor labels (Caveat, gebundeld in fonts/); valt terug op _font."""
+    from PIL import ImageFont
+    path = pathlib.Path(__file__).parent / "fonts" / "CaveatBold.ttf"
+    try:
+        f = ImageFont.truetype(str(path), size)
+        try:
+            f.set_variation_by_name("Bold")          # variabel font -> bold-instantie
+        except Exception:
+            pass
+        return f
+    except Exception:
+        return _font(size, "-Bold")
+
 def _legend(cv, items, x, top, bottom, dots=True):
     """Pillow-legenda: gekleurde stip + smaaknaam (gratis, geen AI)."""
     from PIL import ImageDraw
@@ -693,42 +707,45 @@ def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, 
     return cx_guess, cy_guess                                  # geen enkel pixel gevonden (lege wolk) -> gok blijft staan
 
 def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_step=4,
-                      y_radii=(0, 8, 20, 40, 80, 150, 260)):
-    """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte."""
+                      y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0)):
+    """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte.
+    gap_fracs dwingt eerst een duidelijke afstand tot het midden af (zichtbaar links/rechts),
+    en versoepelt pas als de wolk daar simpelweg geen verf heeft."""
     a = cloud.getchannel("A")
-    for r in y_radii:
-        for ly in ({ly_target} if r == 0 else {ly_target - r, ly_target + r}):
-            if not (0 <= ly < cloud.height):
-                continue
-            row = [lx for lx in range(0, cloud.width, x_step) if a.getpixel((lx, ly)) >= threshold]
-            if not row:
-                continue
-            def ok(c):
-                if excl and excl[0] < c < excl[1]:
-                    return False
-                return (c < half) if side < 0 else (c >= half)
-            pref = [c for c in row if ok(c)]
-            chosen = pref or [c for c in row if not (excl and excl[0] < c < excl[1])] or row
-            if chosen:
-                return rnd.choice(chosen), ly
+    for gap_frac in gap_fracs:
+        gap = int(cloud.width * gap_frac)
+        for r in y_radii:
+            for ly in ({ly_target} if r == 0 else {ly_target - r, ly_target + r}):
+                if not (0 <= ly < cloud.height):
+                    continue
+                row = [lx for lx in range(0, cloud.width, x_step) if a.getpixel((lx, ly)) >= threshold]
+                if not row:
+                    continue
+                def ok(c):
+                    if excl and excl[0] < c < excl[1]:
+                        return False
+                    return (c < half - gap) if side < 0 else (c > half + gap)
+                pref = [c for c in row if ok(c)]
+                if pref:
+                    return rnd.choice(pref), ly
     return None, ly_target
 
 def _label_line(cv, cx, cy, side, size, naam, rnd):
-    """Dun lijntje van de smaak naar een klein tekstlabel, weg van de fles."""
+    """Dun lijntje van de smaak naar een handgeschreven tekstlabel, weg van de fles."""
     from PIL import ImageDraw
     d = ImageDraw.Draw(cv)
     ink = (95, 75, 60, 235)
-    f = _font(34, "-Bold")
+    f = _script_font(52)
     length = rnd.uniform(70, 110)
     sx, sy = cx + side * (size // 2 + 4), cy + rnd.uniform(-6, 6)
     ex, ey = sx + side * length, sy + rnd.uniform(-14, 14)
     d.line([(sx, sy), (ex, ey)], fill=ink, width=2)
-    label = naam.upper()
+    label = naam.capitalize()
     tw = d.textlength(label, font=f)
     tx = ex + 8 if side > 0 else ex - 8 - tw
     N = cv.size[0]
     tx = max(14, min(N - 14 - tw, tx))
-    d.text((tx, ey - 15), label, font=f, fill=ink)
+    d.text((tx, ey - 24), label, font=f, fill=ink)
 
 def _compose_aromawolk(cv, bottle, prim, sec, seed):
     N = cv.size[0]; rnd = random.Random(seed)
@@ -749,6 +766,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed):
     top = cloud_cy - int(cloud.height * 0.42)
     bottom = bottle_top + int(bp * 0.12)
     band = max((bottom - top) / max(len(items), 1), 1)
+    placements = []                                          # (cx, cy, size, side, naam) -> labels na de fles tekenen
     for i, it in enumerate(items):
         size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
         side = -1 if i % 2 == 0 else 1
@@ -767,8 +785,10 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed):
         cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                       shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
-        _label_line(cv, cx, cy, side, size, it["naam"], rnd)
-    _paste_bottle(cv, bottle)
+        placements.append((cx, cy, size, side, it["naam"]))
+    _paste_bottle(cv, bottle)                                   # fles eerst, labels daarna -> nooit afgesneden
+    for cx, cy, size, side, naam in placements:
+        _label_line(cv, cx, cy, side, size, naam, rnd)
 
 def _compose_kleurverloop(cv, bottle, prim, sec, seed):
     N = cv.size[0]
