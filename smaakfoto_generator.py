@@ -654,12 +654,14 @@ def _alpha_at(img, x, y):
         return img.getpixel((x, y))[3]
     return 0
 
-def _gold_speckles(cv, cloud, cloud_pos, seed, n=16):
+def _gold_speckles(cv, cloud, cloud_pos, seed, kleur="rood", n=16):
     from PIL import ImageDraw
     rnd = random.Random(seed + 999)
     d = ImageDraw.Draw(cv)
     a = cloud.getchannel("A")
     ox, oy = cloud_pos
+    # kleurmatig contrast: op een lichte wolk (wit/rose) valt warm goud vrijwel weg -> donkerder koper/brons
+    color = {"wit": (150, 108, 48), "rose": (90, 45, 40)}.get(kleur, (248, 214, 120))
     tries = 0; placed = 0
     while placed < n and tries < n * 12:
         tries += 1
@@ -668,8 +670,8 @@ def _gold_speckles(cv, cloud, cloud_pos, seed, n=16):
             continue
         x, y = ox + lx, oy + ly
         r = rnd.uniform(2.5, 6.5)
-        op = rnd.randint(90, 190)
-        d.ellipse([x - r, y - r, x + r, y + r], fill=(214, 178, 96, op))
+        op = rnd.randint(120, 220)
+        d.ellipse([x - r, y - r, x + r, y + r], fill=color + (op,))
         placed += 1
 
 def _compose_aromawolk(cv, bottle, prim, sec, seed):
@@ -685,7 +687,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed):
     cloud_cy = max(cloud.height // 2 + 20, bottle_top - int(cloud.height * 0.44) + int(N * 0.06))
     cloud_pos = (cloud_cx - cloud.width // 2, cloud_cy - cloud.height // 2)
     cv.alpha_composite(cloud, cloud_pos)
-    _gold_speckles(cv, cloud, cloud_pos, seed)
+    _gold_speckles(cv, cloud, cloud_pos, seed, kleur=kleur)
 
     items = _by_type(prim + sec)
     top = cloud_cy - int(cloud.height * 0.42)
