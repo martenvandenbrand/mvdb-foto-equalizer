@@ -613,12 +613,26 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed):
     kleur = _wine_color(bottle)
     cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
     bp = _bottle_px()
-    cloud_cx, cloud_cy = N // 2, max(cloud.height // 2 + 20, N - 40 - bp - cloud.height // 2 + int(N*0.06))
+    # flesgeometrie vooraf, zodat cutouts de flescolom kunnen mijden
+    b = _trim(bottle); bw, bh = b.size
+    nw = max(1, round(bw * bp / bh))
+    bottle_top = N - 40 - bp
+    cloud_cx, cloud_cy = N // 2, max(cloud.height // 2 + 20, bottle_top - cloud.height // 2 + int(N*0.06))
     cv.alpha_composite(cloud, (cloud_cx - cloud.width // 2, cloud_cy - cloud.height // 2))
-    for it in prim + sec:                                    # bestaande cutouts klein in de wolk
-        cx = int(cloud_cx + rnd.uniform(-0.42, 0.42) * cloud.width)
-        cy = int(cloud_cy + rnd.uniform(-0.38, 0.30) * cloud.height)
-        _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.45, 0.62)), rnd.uniform(-20, 20), shadow=False)
+    items = _by_type(prim + sec)
+    top = cloud_cy - int(cloud.height * 0.42)
+    bottom = bottle_top + int(bp * 0.12)                    # tot net onder de flesmond
+    band = max((bottom - top) / max(len(items), 1), 1)
+    for i, it in enumerate(items):
+        size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
+        side = -1 if i % 2 == 0 else 1                       # links/rechts afwisselen
+        cy = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.15, band * 0.15))
+        cx = int(cloud_cx + side * rnd.uniform(0.16, 0.40) * cloud.width)
+        if cy + size // 2 > bottle_top:                      # naast de hals? -> volledig buiten de flescolom
+            min_off = nw // 2 + size // 2 + 24
+            if abs(cx - N // 2) < min_off:
+                cx = N // 2 + side * min_off
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20), shadow=False)
     _paste_bottle(cv, bottle)
 
 def _compose_kleurverloop(cv, bottle, prim, sec, seed):
