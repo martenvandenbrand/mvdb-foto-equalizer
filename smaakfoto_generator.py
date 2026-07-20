@@ -58,6 +58,26 @@ COL_MARGIN     = float(env("COL_MARGIN", "0.16"))# kolomcenter t.o.v. canvasbree
 BATCH_SIZE     = env_int("BATCH_SIZE", 1)
 HANDLE         = env("HANDLE", "")
 DONE_TAG       = env("DONE_TAG", "smaakfoto")
+OVERWRITE      = env_bool("OVERWRITE", False)   # True = selecteer producten MET de tag en vervang hun smaakfoto
+AROMA_STYLE    = env("AROMA_STYLE", "kolommen") # kolommen|krans|explosie|geometrisch|aromawolk|kleurverloop|rook
+
+# per stijl: fleshoogte + verticale verankering (center of bottom)
+STYLES = {
+    "kolommen":    {"bottle_px": 2000, "anchor": "center"},
+    "krans":       {"bottle_px": 1200, "anchor": "center"},
+    "explosie":    {"bottle_px": 1250, "anchor": "bottom"},
+    "geometrisch": {"bottle_px": 1500, "anchor": "center"},
+    "aromawolk":   {"bottle_px": 1250, "anchor": "bottom"},
+    "kleurverloop":{"bottle_px": 1300, "anchor": "bottom"},
+    "rook":        {"bottle_px": 1300, "anchor": "bottom"},
+}
+
+# kleuren per smaaktype (legenda's + geometrische stijl)
+TYPE_COLORS = {
+    "fruit": (140, 30, 50), "citrus": (212, 160, 40), "bloem": (200, 120, 140),
+    "noot": (150, 100, 60), "hout": (110, 80, 50), "zuivel": (225, 214, 190),
+    "kruid": (95, 115, 60), "overig": (120, 90, 90),
+}
 DRY_RUN        = env_bool("DRY_RUN", True)       # genereert wel (OpenAI-kosten), upload/tagt niet
 BACKUP_DIR     = pathlib.Path("backup_smaak")
 CACHE_DIR      = pathlib.Path("flavor_cache")    # hergebruikte smaak-uitsnedes
@@ -95,17 +115,35 @@ def gql(query, variables=None):
 SELECT_Q = """
 query($n: Int!, $q: String) {
   products(first: $n, query: $q) {
-    nodes { id title handle description featuredImage { url } }
+    nodes {
+      id title handle description featuredImage { url }
+      media(first: 20) { nodes { ... on MediaImage { id alt } } }
+    }
   }
 }"""
+
+DELETE_MEDIA_M = """
+mutation($productId: ID!, $mediaIds: [ID!]!) {
+  productDeleteMedia(productId: $productId, mediaIds: $mediaIds) {
+    deletedMediaIds mediaUserErrors { field message }
+  }
+}"""
+
+SMAAK_ALT = "Wat je proeft"   # hieraan herkennen we de bestaande smaakfoto
 
 def select_products():
     if HANDLE:
         q, n = f"handle:{HANDLE}", 1
+    elif OVERWRITE:
+        q, n = f"tag:{DONE_TAG}", BATCH_SIZE     # vervang bestaande smaakfoto's
     else:
-        q, n = f"-tag:{DONE_TAG}", BATCH_SIZE
+        q, n = f"-tag:{DONE_TAG}", BATCH_SIZE    # alleen nog-niet-verwerkte
     nodes = gql(SELECT_Q, {"n": n, "q": q})["products"]["nodes"]
     return [p for p in nodes if p.get("featuredImage") and p["featuredImage"].get("url")]
+
+def old_smaak_media_ids(p):
+    return [m["id"] for m in p.get("media", {}).get("nodes", [])
+            if m and m.get("alt") == SMAAK_ALT]
 
 STAGED_M = """
 mutation($input: [StagedUploadInput!]!) {
@@ -130,7 +168,7 @@ mutation($id: ID!, $tags: [String!]!) {
   tagsAdd(id: $id, tags: $tags) { userErrors { field message } }
 }"""
 
-def upload_and_attach(product_id, png_bytes, handle):
+def upload_and_attach(product_id, png_bytes, handle, old_ids=None):
     fn = f"{handle}-smaak.png"
     t = gql(STAGED_M, {"input": [{"filename": fn, "mimeType": "image/png",
                                   "httpMethod": "POST", "resource": "IMAGE"}]})
@@ -139,12 +177,14 @@ def upload_and_attach(product_id, png_bytes, handle):
     requests.post(tgt["url"], data=form, files={"file": (fn, png_bytes, "image/png")}).raise_for_status()
     d = gql(CREATE_M, {"productId": product_id,
                        "media": [{"mediaContentType": "IMAGE", "originalSource": tgt["resourceUrl"],
-                                  "alt": "Wat je proeft"}]})
+                                  "alt": SMAAK_ALT}]})
     if d["productCreateMedia"]["mediaUserErrors"]:
         raise RuntimeError(d["productCreateMedia"]["mediaUserErrors"])
     new_id = d["productCreateMedia"]["media"][0]["id"]
     gql(REORDER_M, {"id": product_id, "moves": [{"id": new_id, "newPosition": "1"}]})
     gql(TAG_M, {"id": product_id, "tags": [DONE_TAG]})
+    if old_ids:                                   # oude smaakfoto('s) pas weg als de nieuwe staat
+        gql(DELETE_MEDIA_M, {"productId": product_id, "mediaIds": old_ids})
 
 
 # ------------------------- OpenAI -------------------------
@@ -399,17 +439,221 @@ def _place_column(cv, items, cx, seed):
         cv.alpha_composite(sh, (x - pad, y - pad))
         cv.alpha_composite(cut, (x, y))
 
-def compose(bottle_img, prim, sec, seed=0):
+def _style_cfg():
+    return STYLES.get(AROMA_STYLE, STYLES["kolommen"])
+
+def _bottle_px():
+    return env_int("BOTTLE_PX", _style_cfg()["bottle_px"])
+
+def _paste_bottle(cv, bottle_img):
+    """Echte fles bovenop; hoogte per stijl, center- of bottom-verankerd."""
+    N = cv.size[0]
+    bp = _bottle_px()
+    b = _trim(bottle_img); w, h = b.size
+    nw = max(1, round(w * bp / h))
+    b = b.resize((nw, bp), Image.LANCZOS)
+    y = (N - bp) // 2 if _style_cfg()["anchor"] == "center" else N - bp - 40
+    cv.alpha_composite(b, ((N - nw) // 2, y))
+    return ((N - nw) // 2, y, nw, bp)            # flespositie voor stijlen die eromheen werken
+
+def _new_canvas():
     N = FINAL_SIZE
     fill = (_hex_rgb(BG_COLOR_HEX) + (255,)) if "image-2" in OPENAI_IMAGE_MODEL else (0, 0, 0, 0)
-    cv = Image.new("RGBA", (N, N), fill)      # gpt-image-2: hele achtergrond #EFF0F5; anders transparant
+    return Image.new("RGBA", (N, N), fill)
+
+def _place_cutout(cv, it, cx, cy, size, angle, shadow=True):
+    cut = _fit(get_flavor_cutout(it["naam"], it.get("type", "")), size)
+    if angle:
+        cut = cut.rotate(angle, expand=True, resample=Image.BICUBIC)
+    x, y = cx - cut.width // 2, cy - cut.height // 2
+    if shadow:
+        sh, pad = _drop_shadow(cut)
+        cv.alpha_composite(sh, (x - pad, y - pad))
+    cv.alpha_composite(cut, (x, y))
+
+def _wine_color(bottle_img):
+    """rood/wit/rose op basis van de gemiddelde kleur van het midden van de fles."""
+    b = _trim(bottle_img).convert("RGBA")
+    w, h = b.size
+    box = b.crop((int(w*0.30), int(h*0.45), int(w*0.70), int(h*0.75)))
+    px = [p for p in box.getdata() if p[3] > 200]
+    if not px:
+        return "rood"
+    r = sum(p[0] for p in px)/len(px); g = sum(p[1] for p in px)/len(px); bl = sum(p[2] for p in px)/len(px)
+    if r > 120 and g > 90 and bl < g:            # goud/geel -> wit
+        return "wit"
+    if r > 140 and g < 110 and bl < 130 and r - g > 60:
+        return "rose" if g > 70 else "rood"
+    return "rood"
+
+ASSET_PROMPTS = {
+    "aromawolk":   "Een zachte, dromerige aquarel-aromawolk die omhoog kringelt, dicht bij de basis en "
+                   "uitwaaierend naar boven, in {palet}. Fijne pigmentnevel, organische randen.",
+    "kleurverloop":"Sierlijke, gelaagde zijdeachtige rooklinten die omhoog stromen en uitwaaieren, "
+                   "meerdere vloeiende banen naast elkaar in {palet}, elegant en luchtig.",
+    "rook":        "IJle, elegante parfumrook: dunne kronkelende slierten die omhoog dansen en vervagen, "
+                   "in {palet}, subtiel en verfijnd met fijne gouden spikkels.",
+}
+PALETTES = {
+    "rood": "diep bordeauxrood, pruimpaars, amber en een vleug olijfgroen",
+    "wit":  "goudgeel, zachtgroen, ivoor en licht amber",
+    "rose": "zachtroze, framboos, perzik en licht goud",
+}
+
+def _style_asset(style, kleur):
+    """Herbruikbare sfeer-asset (wolk/linten/rook) per stijl+wijnkleur; 1x genereren, daarna cache."""
+    CACHE_DIR.mkdir(exist_ok=True)
+    fp = CACHE_DIR / f"asset-{style}-{kleur}-gpt.png"
+    if fp.exists() and not BYPASS_CACHE:
+        return Image.open(fp).convert("RGBA")
+    prompt = (ASSET_PROMPTS[style].format(palet=PALETTES[kleur]) +
+              " Op een VOLLEDIG TRANSPARANTE achtergrond, niets anders in beeld: geen fles, geen tekst, "
+              "geen objecten, geen ondergrond.")
+    body = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1536",
+            "background": "transparent", "output_format": "png", "quality": IMAGE_QUALITY, "n": 1}
+    if "image-2" in OPENAI_IMAGE_MODEL:
+        body["background"] = "opaque"
+        body["prompt"] = body["prompt"].replace("VOLLEDIG TRANSPARANTE achtergrond",
+                                                f"egale achtergrond in kleur {BG_COLOR_HEX}")
+    r = _openai_post("https://api.openai.com/v1/images/generations",
+        headers={"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"},
+        data=json.dumps(body), timeout=300)
+    resp = r.json(); uu = resp.get("usage", {})
+    _cost["img"] += 1; _cost["img_in"] += uu.get("input_tokens", 0); _cost["img_out"] += uu.get("output_tokens", 0)
+    img = Image.open(io.BytesIO(base64.b64decode(resp["data"][0]["b64_json"]))).convert("RGBA")
+    if "image-2" in OPENAI_IMAGE_MODEL:
+        img = _remove_solid_bg(img, _hex_rgb(BG_COLOR_HEX))
+    img.save(fp)
+    return img
+
+def _font(size, variant=""):
+    base = "/usr/share/fonts/truetype/dejavu/DejaVuSans"
+    try:
+        from PIL import ImageFont
+        return ImageFont.truetype(f"{base}{variant}.ttf", size)
+    except Exception:
+        from PIL import ImageFont
+        return ImageFont.load_default()
+
+def _legend(cv, items, x, top, bottom, dots=True):
+    """Pillow-legenda: gekleurde stip + smaaknaam (gratis, geen AI)."""
+    from PIL import ImageDraw
+    d = ImageDraw.Draw(cv)
+    f = _font(46, "-Bold"); f2 = _font(34, "-Oblique")
+    n = max(len(items), 1); step = (bottom - top) / n
+    ink = (60, 45, 45, 255)
+    for i, it in enumerate(items):
+        cy = int(top + step * (i + 0.5))
+        col = TYPE_COLORS.get(it.get("type", "overig"), TYPE_COLORS["overig"])
+        tx = x
+        if dots:
+            d.ellipse([x, cy - 16, x + 32, cy + 16], fill=col + (255,))
+            tx = x + 56
+        d.text((tx, cy - 26), it["naam"].upper(), font=f, fill=ink)
+        if not dots:
+            d.text((tx, cy + 20), it.get("type", ""), font=f2, fill=(120, 100, 100, 255))
+
+# --- stijl-composers ---
+def _compose_kolommen(cv, bottle, prim, sec, seed):
+    N = cv.size[0]
     cxL, cxR = int(COL_MARGIN * N), int((1 - COL_MARGIN) * N)
-    _place_column(cv, prim, cxL, seed)         # primair links
-    _place_column(cv, sec, cxR, seed + 1)      # secundair rechts
-    b = _trim(bottle_img); w, h = b.size        # echte fles bovenop, exact BOTTLE_PX hoog
-    nw = max(1, round(w * BOTTLE_PX / h))
-    b = b.resize((nw, BOTTLE_PX), Image.LANCZOS)
-    cv.alpha_composite(b, ((N - nw) // 2, (N - BOTTLE_PX) // 2))
+    _place_column(cv, prim, cxL, seed)
+    _place_column(cv, sec, cxR, seed + 1)
+    _paste_bottle(cv, bottle)
+
+def _compose_krans(cv, bottle, prim, sec, seed):
+    import math
+    N = cv.size[0]; items = _by_type(prim + sec); n = max(len(items), 1)
+    rnd = random.Random(seed)
+    rx, ry = N * 0.36, N * 0.38
+    for i, it in enumerate(items):
+        a = -math.pi / 2 + 2 * math.pi * i / n
+        cx = int(N / 2 + rx * math.cos(a)); cy = int(N / 2 + ry * math.sin(a))
+        _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.75, 1.0)), rnd.uniform(-14, 14))
+    _paste_bottle(cv, bottle)
+
+def _compose_explosie(cv, bottle, prim, sec, seed):
+    import math
+    N = cv.size[0]; items = prim + sec
+    rnd = random.Random(seed)
+    bp = _bottle_px()
+    neck = (N // 2, N - 40 - bp + int(bp * 0.06))          # rond de flessenhals
+    placed = items + items                                  # elk 2x: 1 groot, 1 klein -> vollere burst
+    for i, it in enumerate(placed):
+        big = i < len(items)
+        a = math.radians(rnd.uniform(200, 340))             # bovenste helft
+        r = rnd.uniform(0.10, 0.34) * N if big else rnd.uniform(0.22, 0.42) * N
+        cx = int(neck[0] + r * math.cos(a)); cy = int(neck[1] + r * math.sin(a))
+        size = int(FLAVOR_PX * (rnd.uniform(0.85, 1.1) if big else rnd.uniform(0.45, 0.6)))
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-30, 30), shadow=big)
+    _paste_bottle(cv, bottle)
+
+def _compose_geometrisch(cv, bottle, prim, sec, seed):
+    from PIL import ImageDraw
+    N = cv.size[0]; rnd = random.Random(seed)
+    lay = Image.new("RGBA", (N, N), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
+    gold = (196, 160, 90, 200)
+    for _ in range(3):                                       # dunne gouden ringen
+        r = rnd.randint(int(N*0.18), int(N*0.42)); cx = rnd.randint(int(N*0.25), int(N*0.75)); cy = rnd.randint(int(N*0.25), int(N*0.75))
+        d.ellipse([cx-r, cy-r, cx+r, cy+r], outline=gold, width=4)
+    for it in prim + sec:                                    # gekleurde cirkels per smaaktype
+        col = TYPE_COLORS.get(it.get("type", "overig"), TYPE_COLORS["overig"])
+        r = rnd.randint(80, 170)
+        side = rnd.choice([rnd.uniform(0.08, 0.30), rnd.uniform(0.70, 0.92)])   # links of rechts van de fles
+        cx = int(side * N); cy = rnd.randint(int(N*0.12), int(N*0.85))
+        d.ellipse([cx-r, cy-r, cx+r, cy+r], fill=col + (rnd.randint(170, 235),))
+    for _ in range(4):                                       # kleine gouden accenten
+        cx = rnd.randint(int(N*0.1), int(N*0.9)); cy = rnd.randint(int(N*0.1), int(N*0.9)); r = rnd.randint(10, 22)
+        d.ellipse([cx-r, cy-r, cx+r, cy+r], fill=gold)
+    cv.alpha_composite(lay)
+    _paste_bottle(cv, bottle)
+
+def _compose_aromawolk(cv, bottle, prim, sec, seed):
+    N = cv.size[0]; rnd = random.Random(seed)
+    kleur = _wine_color(bottle)
+    cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
+    bp = _bottle_px()
+    cloud_cx, cloud_cy = N // 2, max(cloud.height // 2 + 20, N - 40 - bp - cloud.height // 2 + int(N*0.06))
+    cv.alpha_composite(cloud, (cloud_cx - cloud.width // 2, cloud_cy - cloud.height // 2))
+    for it in prim + sec:                                    # bestaande cutouts klein in de wolk
+        cx = int(cloud_cx + rnd.uniform(-0.42, 0.42) * cloud.width)
+        cy = int(cloud_cy + rnd.uniform(-0.38, 0.30) * cloud.height)
+        _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.45, 0.62)), rnd.uniform(-20, 20), shadow=False)
+    _paste_bottle(cv, bottle)
+
+def _compose_kleurverloop(cv, bottle, prim, sec, seed):
+    N = cv.size[0]
+    kleur = _wine_color(bottle)
+    ribbons = _fit(_style_asset("kleurverloop", kleur), int(N * 0.66))
+    bp = _bottle_px()
+    cx = int(N * 0.40)                                       # fles + linten iets naar links, legenda rechts
+    cv.alpha_composite(ribbons, (cx - ribbons.width // 2, max(10, N - 40 - bp - ribbons.height + int(bp*0.12))))
+    _legend(cv, _by_type(prim + sec), int(N * 0.74), int(N * 0.16), int(N * 0.62), dots=True)
+    b = _trim(bottle); w, h = b.size
+    nw = max(1, round(w * bp / h)); b = b.resize((nw, bp), Image.LANCZOS)
+    cv.alpha_composite(b, (cx - nw // 2, N - bp - 40))
+
+def _compose_rook(cv, bottle, prim, sec, seed):
+    N = cv.size[0]
+    kleur = _wine_color(bottle)
+    smoke = _fit(_style_asset("rook", kleur), int(N * 0.60))
+    bp = _bottle_px()
+    cx = int(N * 0.38)
+    cv.alpha_composite(smoke, (cx - smoke.width // 3, max(10, N - 40 - bp - smoke.height + int(bp*0.10))))
+    _legend(cv, _by_type(prim + sec), int(N * 0.72), int(N * 0.18), int(N * 0.70), dots=False)
+    b = _trim(bottle); w, h = b.size
+    nw = max(1, round(w * bp / h)); b = b.resize((nw, bp), Image.LANCZOS)
+    cv.alpha_composite(b, (cx - nw // 2, N - bp - 40))
+
+_COMPOSERS = {
+    "kolommen": _compose_kolommen, "krans": _compose_krans, "explosie": _compose_explosie,
+    "geometrisch": _compose_geometrisch, "aromawolk": _compose_aromawolk,
+    "kleurverloop": _compose_kleurverloop, "rook": _compose_rook,
+}
+
+def compose(bottle_img, prim, sec, seed=0):
+    cv = _new_canvas()
+    _COMPOSERS.get(AROMA_STYLE, _compose_kolommen)(cv, bottle_img, prim, sec, seed)
     return cv
 
 
@@ -424,8 +668,8 @@ def main():
     BACKUP_DIR.mkdir(exist_ok=True)
 
     products = select_products()
-    print(f"== {'DRY-RUN' if DRY_RUN else 'LIVE'} | model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) "
-          f"| fles {BOTTLE_PX}px op {FINAL_SIZE} | smaak {FLAVOR_PX}px | {len(products)} fles(sen) ==\n")
+    print(f"== {'DRY-RUN' if DRY_RUN else 'LIVE'} | stijl {AROMA_STYLE} | model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) "
+          f"| fles {_bottle_px()}px op {FINAL_SIZE} | overwrite: {OVERWRITE} | {len(products)} fles(sen) ==\n")
     if DRY_RUN:
         print("Let op: DRY-RUN genereert nieuwe smaken (OpenAI-kosten, maar gecacht), upload/tagt niet.\n")
 
@@ -444,7 +688,7 @@ def main():
             print(f"[{'dry' if DRY_RUN else 'ok'}] {p['handle']}  | links: {names(prim)}  | rechts: {names(sec)}")
             if not DRY_RUN:
                 buf = io.BytesIO(); final.save(buf, "PNG", optimize=True)
-                upload_and_attach(p["id"], buf.getvalue(), p["handle"])
+                upload_and_attach(p["id"], buf.getvalue(), p["handle"], old_ids=old_smaak_media_ids(p))
             done += 1
         except Exception as e:
             print(f"[ERR] {p.get('handle')}: {e}"); failed += 1
