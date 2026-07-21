@@ -804,23 +804,26 @@ def _gold_speckles(cv, cloud, cloud_pos, seed, kleur="rood", n=16):
         d.ellipse([x - r, y - r, x + r, y + r], fill=color + (op,))
         placed += 1
 
-def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, max_r=None):
-    """Absolute allerlaatste redmiddel: dichtstbijzijnde punt met echte wolk-verf, rondom een gok."""
+def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, max_r=None, excl_x=None):
+    """Absolute allerlaatste redmiddel: dichtstbijzijnde punt met echte wolk-verf, rondom een gok.
+    excl_x (lokale x-range) wordt overgeslagen, zodat dit ook de flesuitsluiting respecteert."""
     a = cloud.getchannel("A")
     lx0, ly0 = cx_guess - cloud_pos[0], cy_guess - cloud_pos[1]
     max_r = max_r or max(cloud.size)
+    def ok(lx):
+        return not (excl_x and excl_x[0] < lx < excl_x[1])
     for r in range(0, max_r, step):
         for dx in range(-r, r + 1, step):
             for dy in (-r, r) if r else (0,):
                 lx, ly = lx0 + dx, ly0 + dy
-                if 0 <= lx < cloud.width and 0 <= ly < cloud.height and a.getpixel((lx, ly)) >= threshold:
+                if 0 <= lx < cloud.width and 0 <= ly < cloud.height and ok(lx) and a.getpixel((lx, ly)) >= threshold:
                     return cloud_pos[0] + lx, cloud_pos[1] + ly
             for dy in range(-r, r + 1, step):
                 for dx in (-r, r) if r else (0,):
                     lx, ly = lx0 + dx, ly0 + dy
-                    if 0 <= lx < cloud.width and 0 <= ly < cloud.height and a.getpixel((lx, ly)) >= threshold:
+                    if 0 <= lx < cloud.width and 0 <= ly < cloud.height and ok(lx) and a.getpixel((lx, ly)) >= threshold:
                         return cloud_pos[0] + lx, cloud_pos[1] + ly
-    return cx_guess, cy_guess                                  # geen enkel pixel gevonden (lege wolk) -> gok blijft staan
+    return None                                                # nergens (buiten de uitsluiting) wolk gevonden
 
 def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_step=4,
                       y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0),
@@ -922,7 +925,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
 
     items = _by_type(prim + sec)
     top = cloud_cy - int(cloud.height * 0.42)
-    bottom = bottle_top + int(bp * 0.12)
+    bottom = bottle_top - int(bp * 0.02)
     n = max(len(items), 1)
     band = (bottom - top) / n                                # de beschikbare ruimte in exact gelijke vakken
     bottle_top_r, bottle_bottom_r = _bottle_rect(N)
@@ -932,21 +935,24 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
         side = -1 if i % 2 == 0 else 1
         cy_target = int(top + band * (i + 0.5))               # midden van het vak, nauwelijks jitter
         half = cloud.width // 2
+        half_extent = int(size * 0.66)                          # rotatiebestendige marge (tot ~20-25 graden)
         excl = None
-        if cy_target + size // 2 > bottle_top:                 # nabij de hals: fles-kolom uitsluiten
-            min_off = nw // 2 + size // 2 + 24
+        if cy_target + half_extent > bottle_top:                 # nabij de hals: fles-kolom uitsluiten
+            min_off = nw // 2 + half_extent + 24
             excl = (cloud_cx - min_off - cloud_pos[0], cloud_cx + min_off - cloud_pos[0])
         lx, ly = _find_cloud_point(cloud, rnd, cy_target - cloud_pos[1], side, half, excl,
-                                   max_y_radius=band * 0.48)     # 1e voorkeur: blijf binnen het eigen vak
+                                   max_y_radius=band * 0.70)     # 1e voorkeur: blijf binnen het eigen vak
         if lx is None:                                           # eigen vak heeft nergens bruikbare verf -> verder zoeken
             lx, ly = _find_cloud_point(cloud, rnd, cy_target - cloud_pos[1], side, half, excl)
         if lx is not None:
-            cx, cy = cloud_pos[0] + lx, cloud_pos[1] + ly
-        else:                                                   # absolute laatste redmiddel: dichtstbijzijnde wolk waar dan ook
-            cx, cy = _nearest_paint(cloud, cloud_pos,
-                                    cx_guess=cloud_cx + side * int(0.20 * cloud.width), cy_guess=cy_target)
-        # universele eindcontrole: ongeacht welk pad hierboven (cx,cy) opleverde, nooit over de fles
-        cx = _avoid_bottle(cx, cy, size, N, nw, bottle_top_r, bottle_bottom_r, side=side)
+            cx, cy = cloud_pos[0] + lx, cloud_pos[1] + ly        # gegarandeerd zowel op de wolk als weg van de fles
+        else:                                                    # absolute laatste redmiddel: dichtstbijzijnde wolk, uitsluiting nog steeds gerespecteerd
+            gok_cx = cloud_cx + side * int(0.20 * cloud.width)
+            found = _nearest_paint(cloud, cloud_pos, cx_guess=gok_cx, cy_guess=cy_target,
+                                   excl_x=(excl[0] + cloud_pos[0], excl[1] + cloud_pos[0]) if excl else None)
+            if found is None:                                     # zelfs dat niet -> uitsluiting laten varen, liever zichtbaar dan nergens
+                found = _nearest_paint(cloud, cloud_pos, cx_guess=gok_cx, cy_guess=cy_target)
+            cx, cy = found if found else (gok_cx, cy_target)
         cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                       shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
