@@ -114,3 +114,10 @@ Kies in de workflow met `aroma_stijl` uit zeven layouts:
 - **`overwrite`**: selecteert producten MET de tag en vervangt hun bestaande
   smaakfoto (herkend aan alt-tekst "Wat je proeft") — de oude wordt pas verwijderd
   nadat de nieuwe staat. Zo vervang je de hele catalogus veilig van stijl.
+
+### Lettertype van de labels
+De smaaklabels in de `aromawolk`-stijl gebruiken **Fraunces Italic** (SemiBold),
+gebundeld in `fonts/FrauncesItalic.ttf`. Het verbindingslijntje wordt met
+supersampling getekend (anti-aliased) en heeft een lichte, willekeurige boog per
+smaak, zodat het zacht en handgeschreven oogt in plaats van hoekig. De fles wordt
+vóór de labels getekend, zodat een label nooit door de capsule kan worden afgesneden.

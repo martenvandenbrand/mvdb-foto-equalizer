@@ -537,18 +537,18 @@ def _font(size, variant=""):
         return ImageFont.load_default()
 
 def _script_font(size):
-    """Handschrift-lettertype voor labels (Caveat, gebundeld in fonts/); valt terug op _font."""
+    """Elegant lettertype voor labels (Fraunces SemiBold Italic, gebundeld in fonts/)."""
     from PIL import ImageFont
-    path = pathlib.Path(__file__).parent / "fonts" / "CaveatBold.ttf"
+    path = pathlib.Path(__file__).parent / "fonts" / "FrauncesItalic.ttf"
     try:
         f = ImageFont.truetype(str(path), size)
         try:
-            f.set_variation_by_name("Bold")          # variabel font -> bold-instantie
+            f.set_variation_by_name("SemiBold Italic")
         except Exception:
             pass
         return f
     except Exception:
-        return _font(size, "-Bold")
+        return _font(size, "-Oblique")
 
 def _legend(cv, items, x, top, bottom, dots=True):
     """Pillow-legenda: gekleurde stip + smaaknaam (gratis, geen AI)."""
@@ -730,22 +730,48 @@ def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_s
                     return rnd.choice(pref), ly
     return None, ly_target
 
+def _smooth_line(cv, p1, p2, color, width=1.3, curve=0.12, supersample=4):
+    """Dun, ANTI-GEALIASED lijntje met een zachte boog (PIL's eigen lijnen zijn niet
+    anti-aliased en ogen daardoor gekarteld; hier supersamplen we en schalen terug)."""
+    minx, maxx = min(p1[0], p2[0]) - 20, max(p1[0], p2[0]) + 20
+    miny, maxy = min(p1[1], p2[1]) - 20, max(p1[1], p2[1]) + 20
+    w, h = int(maxx - minx), int(maxy - miny)
+    if w <= 0 or h <= 0:
+        return
+    ss = supersample
+    layer = Image.new("RGBA", (w * ss, h * ss), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    mx, my = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+    dx, dy = p2[0] - p1[0], p2[1] - p1[1]
+    length = max((dx ** 2 + dy ** 2) ** 0.5, 1)
+    nx, ny = -dy / length, dx / length            # loodrecht op de lijn, voor een zachte boog
+    cxp, cyp = mx + nx * curve * length, my + ny * curve * length
+    steps = 20
+    pts = []
+    for i in range(steps + 1):
+        t = i / steps
+        bx = (1 - t) ** 2 * p1[0] + 2 * (1 - t) * t * cxp + t ** 2 * p2[0]
+        by = (1 - t) ** 2 * p1[1] + 2 * (1 - t) * t * cyp + t ** 2 * p2[1]
+        pts.append(((bx - minx) * ss, (by - miny) * ss))
+    d.line(pts, fill=color, width=max(1, int(round(width * ss))), joint="curve")
+    layer = layer.resize((w, h), Image.LANCZOS)
+    cv.alpha_composite(layer, (int(minx), int(miny)))
+
 def _label_line(cv, cx, cy, side, size, naam, rnd):
-    """Dun lijntje van de smaak naar een handgeschreven tekstlabel, weg van de fles."""
-    from PIL import ImageDraw
-    d = ImageDraw.Draw(cv)
-    ink = (95, 75, 60, 235)
+    """Dun, subtiel lijntje van de smaak naar een elegant tekstlabel, weg van de fles."""
+    ink = (95, 75, 60, 150)
     f = _script_font(52)
     length = rnd.uniform(70, 110)
     sx, sy = cx + side * (size // 2 + 4), cy + rnd.uniform(-6, 6)
     ex, ey = sx + side * length, sy + rnd.uniform(-14, 14)
-    d.line([(sx, sy), (ex, ey)], fill=ink, width=2)
+    _smooth_line(cv, (sx, sy), (ex, ey), ink, width=1.3, curve=rnd.uniform(-0.14, 0.14))
+    d = ImageDraw.Draw(cv)
     label = naam.capitalize()
     tw = d.textlength(label, font=f)
     tx = ex + 8 if side > 0 else ex - 8 - tw
     N = cv.size[0]
     tx = max(14, min(N - 14 - tw, tx))
-    d.text((tx, ey - 24), label, font=f, fill=ink)
+    d.text((tx, ey - 24), label, font=f, fill=(95, 75, 60, 235))
 
 def _compose_aromawolk(cv, bottle, prim, sec, seed):
     N = cv.size[0]; rnd = random.Random(seed)
