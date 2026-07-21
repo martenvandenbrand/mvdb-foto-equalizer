@@ -119,6 +119,9 @@ query($n: Int!, $q: String, $cursor: String) {
     pageInfo { hasNextPage endCursor }
     nodes {
       id title handle description featuredImage { url }
+      metafield(namespace: "shopify", key: "wine-variety") {
+        references(first: 1) { nodes { ... on Metaobject { field(key: "label") { value } } } }
+      }
       media(first: 20) { nodes { ... on MediaImage { id alt } } }
     }
   }
@@ -485,16 +488,45 @@ def _place_cutout(cv, it, cx, cy, size, angle, shadow=True, shadow_blur=18, shad
         cv.alpha_composite(sh, (x - pad, y - pad))
     cv.alpha_composite(cut, (x, y))
 
+def _product_wine_color(p):
+    """Wijnkleur uit Shopify's eigen 'wine-variety'-metaveld (betrouwbaar); None als het ontbreekt
+    of een onbekende waarde heeft (bijv. mousserend/versterkt) -> aanroeper valt dan terug op pixels."""
+    try:
+        nodes = p["metafield"]["references"]["nodes"]
+        label = nodes[0]["field"]["value"].strip().lower()
+    except (KeyError, IndexError, TypeError):
+        return None
+    return {"rood": "rood", "red": "rood", "wit": "wit", "white": "wit",
+            "rose": "rose", "rosé": "rose", "rosee": "rose"}.get(label)
+
 def _wine_color(bottle_img):
-    """rood/wit/rose op basis van de gemiddelde kleur van het midden van de fles."""
-    b = _trim(bottle_img).convert("RGBA")
+    """rood/wit/rose, bepaald door de GLADSTE band te kiezen (laagste lokale variantie).
+    Een bedrukt etiket (tekst/randen/logo's) heeft veel lokale variatie; het wijnglas zelf
+    is een vloeiende, egale kleurband. Zo mijden we per ongeluk het etiket bemonsteren."""
+    import statistics
+    b = _trim(bottle_img).convert("RGB")
     w, h = b.size
-    box = b.crop((int(w*0.30), int(h*0.45), int(w*0.70), int(h*0.75)))
-    px = [p for p in box.getdata() if p[3] > 200]
-    if not px:
+    band_h = max(4, int(h * 0.025))
+    candidates = []
+    for pct in range(8, 92, 4):
+        y = int(h * pct / 100)
+        y0, y1 = max(0, y - band_h // 2), min(h, y + band_h // 2)
+        strip = b.crop((int(w * 0.30), y0, int(w * 0.70), y1))
+        px = list(strip.getdata())
+        if not px:
+            continue
+        lums = [0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2] for p in px]
+        var = statistics.pvariance(lums)
+        mean = (sum(p[0] for p in px) / len(px), sum(p[1] for p in px) / len(px), sum(p[2] for p in px) / len(px))
+        candidates.append((var, mean))
+    if not candidates:
         return "rood"
-    r = sum(p[0] for p in px)/len(px); g = sum(p[1] for p in px)/len(px); bl = sum(p[2] for p in px)/len(px)
-    if r > 120 and g > 90 and bl < g:            # goud/geel -> wit
+    candidates.sort(key=lambda c: c[0])           # laagste variantie eerst = meest waarschijnlijk kaal glas
+    top = candidates[:5]                            # mediaan van de 5 gladste banden, ruis-robuust
+    r = sum(c[1][0] for c in top) / len(top)
+    g = sum(c[1][1] for c in top) / len(top)
+    bl = sum(c[1][2] for c in top) / len(top)
+    if r > 120 and g > 90 and bl < g:              # goud/geel -> wit
         return "wit"
     if r > 140 and g < 110 and bl < 130 and r - g > 60:
         return "rose" if g > 70 else "rood"
@@ -582,14 +614,14 @@ def _legend(cv, items, x, top, bottom, dots=True):
             d.text((tx, cy + 20), it.get("type", ""), font=f2, fill=(120, 100, 100, 255))
 
 # --- stijl-composers ---
-def _compose_kolommen(cv, bottle, prim, sec, seed):
+def _compose_kolommen(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]
     cxL, cxR = int(COL_MARGIN * N), int((1 - COL_MARGIN) * N)
     _place_column(cv, prim, cxL, seed)
     _place_column(cv, sec, cxR, seed + 1)
     _paste_bottle(cv, bottle)
 
-def _compose_krans(cv, bottle, prim, sec, seed):
+def _compose_krans(cv, bottle, prim, sec, seed, kleur_override=None):
     import math
     N = cv.size[0]; items = _by_type(prim + sec); n = max(len(items), 1)
     rnd = random.Random(seed)
@@ -607,7 +639,7 @@ def _compose_krans(cv, bottle, prim, sec, seed):
                       rnd.uniform(-25, 25), shadow=False)
     _paste_bottle(cv, bottle)
 
-def _compose_explosie(cv, bottle, prim, sec, seed):
+def _compose_explosie(cv, bottle, prim, sec, seed, kleur_override=None):
     import math
     N = cv.size[0]; items = prim + sec
     rnd = random.Random(seed)
@@ -643,7 +675,7 @@ def _compose_explosie(cv, bottle, prim, sec, seed):
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-35, 35), shadow=False)
     _paste_bottle(cv, bottle)
 
-def _compose_geometrisch(cv, bottle, prim, sec, seed):
+def _compose_geometrisch(cv, bottle, prim, sec, seed, kleur_override=None):
     from PIL import ImageDraw
     N = cv.size[0]; rnd = random.Random(seed)
     lay = Image.new("RGBA", (N, N), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
@@ -770,32 +802,37 @@ def _smooth_line(cv, p1, p2, color, width=1.3, curve=0.12, supersample=4):
     layer = layer.resize((w, h), Image.LANCZOS)
     cv.alpha_composite(layer, (int(minx), int(miny)))
 
-def _label_line(cv, cx, cy, side, size, naam, rnd):
-    """Dun, subtiel lijntje van de smaak naar een elegant tekstlabel, weg van de fles.
-    Gelijke witruimte aan beide uiteinden; de lijn eindigt op de verticale MIDDEN-hoogte
-    van het lettertype (niet aan de bovenkant)."""
-    ink = (95, 75, 60, 150)
-    f = _script_font(52)
-    pad = 10                                                   # zelfde witruimte: item->lijn en lijn->tekst
+def _draw_labels(cv, placements, rnd):
+    """Tekent alle labels in één pas, met botsingscontrole: op dezelfde zijde krijgt elk
+    volgend label een minimale verticale afstand tot het vorige, zodat tekst bij wijnen
+    met veel smaken (7+) nooit over elkaar heen valt."""
     d = ImageDraw.Draw(cv)
-    label = naam.capitalize()
-    l, t, r, b = d.textbbox((0, 0), label, font=f)             # echte glyph-afmetingen (incl. boven-/onderhang)
-    tw, th = r - l, b - t
-
-    length = rnd.uniform(70, 110)
-    sx, sy = cx + side * (size // 2 + pad), cy + rnd.uniform(-6, 6)
-    ex, ey = sx + side * length, sy + rnd.uniform(-14, 14)     # ey = verticale middenhoogte van het label
-    _smooth_line(cv, (sx, sy), (ex, ey), ink, width=1.3, curve=rnd.uniform(-0.14, 0.14))
-
-    tx = ex + pad if side > 0 else ex - pad - tw
-    ty = ey - t - th / 2                                       # tekst zo plaatsen dat zijn midden op ey valt
+    f = _script_font(52)
+    pad = 10
     N = cv.size[0]
-    tx = max(14, min(N - 14 - tw, tx))
-    d.text((tx, ty), label, font=f, fill=(95, 75, 60, 235))
+    min_gap = 16                                             # minimale ruimte tussen twee labels op dezelfde zijde
+    last_bottom = {-1: -1e9, 1: -1e9}
+    for cx, cy, size, side, naam in sorted(placements, key=lambda p: (p[3], p[1])):  # per zijde, van boven naar beneden
+        label = naam.capitalize()
+        l, t, r, b = d.textbbox((0, 0), label, font=f)
+        tw, th = r - l, b - t
+        length = rnd.uniform(70, 110)
+        sx, sy = cx + side * (size // 2 + pad), cy + rnd.uniform(-6, 6)
+        ey = sy + rnd.uniform(-14, 14)
+        needed = last_bottom[side] + min_gap + th / 2         # label-midden moet hier minstens op zitten
+        if ey < needed:
+            ey = needed
+        ex = sx + side * length
+        _smooth_line(cv, (sx, sy), (ex, ey), (95, 75, 60, 150), width=1.3, curve=rnd.uniform(-0.14, 0.14))
+        tx = ex + pad if side > 0 else ex - pad - tw
+        ty = ey - t - th / 2
+        tx = max(14, min(N - 14 - tw, tx))
+        d.text((tx, ty), label, font=f, fill=(95, 75, 60, 235))
+        last_bottom[side] = ey + th / 2
 
-def _compose_aromawolk(cv, bottle, prim, sec, seed):
+def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; rnd = random.Random(seed)
-    kleur = _wine_color(bottle)
+    kleur = kleur_override or _wine_color(bottle)
     base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
     cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
     bp = _bottle_px()
@@ -833,12 +870,11 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed):
                       shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
         placements.append((cx, cy, size, side, it["naam"]))
     _paste_bottle(cv, bottle)                                   # fles eerst, labels daarna -> nooit afgesneden
-    for cx, cy, size, side, naam in placements:
-        _label_line(cv, cx, cy, side, size, naam, rnd)
+    _draw_labels(cv, placements, rnd)
 
-def _compose_kleurverloop(cv, bottle, prim, sec, seed):
+def _compose_kleurverloop(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]
-    kleur = _wine_color(bottle)
+    kleur = kleur_override or _wine_color(bottle)
     ribbons = _fit(_style_asset("kleurverloop", kleur), int(N * 0.66))
     bp = _bottle_px()
     cx = int(N * 0.40)                                       # fles + linten iets naar links, legenda rechts
@@ -848,9 +884,9 @@ def _compose_kleurverloop(cv, bottle, prim, sec, seed):
     nw = max(1, round(w * bp / h)); b = b.resize((nw, bp), Image.LANCZOS)
     cv.alpha_composite(b, (cx - nw // 2, N - bp - 40))
 
-def _compose_rook(cv, bottle, prim, sec, seed):
+def _compose_rook(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]
-    kleur = _wine_color(bottle)
+    kleur = kleur_override or _wine_color(bottle)
     smoke = _fit(_style_asset("rook", kleur), int(N * 0.60))
     bp = _bottle_px()
     cx = int(N * 0.38)
@@ -894,7 +930,7 @@ def _dotted_line(d, p1, p2, color, dot=5, gap=26):
         x = p1[0] + (p2[0] - p1[0]) * t; y = p1[1] + (p2[1] - p1[1]) * t
         d.ellipse([x - dot/2, y - dot/2, x + dot/2, y + dot/2], fill=color)
 
-def _compose_constellatie(cv, bottle, prim, sec, seed):
+def _compose_constellatie(cv, bottle, prim, sec, seed, kleur_override=None):
     from PIL import ImageDraw
     N = cv.size[0]; rnd = random.Random(seed)
     items = _by_type(prim + sec)
@@ -938,9 +974,9 @@ def _compose_constellatie(cv, bottle, prim, sec, seed):
 
 _COMPOSERS["constellatie"] = _compose_constellatie
 
-def compose(bottle_img, prim, sec, seed=0):
+def compose(bottle_img, prim, sec, seed=0, kleur_override=None):
     cv = _new_canvas()
-    _COMPOSERS.get(AROMA_STYLE, _compose_kolommen)(cv, bottle_img, prim, sec, seed)
+    _COMPOSERS.get(AROMA_STYLE, _compose_kolommen)(cv, bottle_img, prim, sec, seed, kleur_override)
     return cv
 
 
@@ -969,7 +1005,9 @@ def main():
                 print(f"[skip] {p['handle']}: geen (bruikbare) smaken in beschrijving"); continue
             prim, sec = _balance(prim, sec)
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
-            final = compose(Image.open(io.BytesIO(raw)), prim, sec, seed=zlib.crc32(p["handle"].encode()))
+            kleur_override = _product_wine_color(p)          # betrouwbaar Shopify-veld; None = val terug op pixels
+            final = compose(Image.open(io.BytesIO(raw)), prim, sec,
+                            seed=zlib.crc32(p["handle"].encode()), kleur_override=kleur_override)
             final.save(BACKUP_DIR / f"{p['handle']}-smaak.png", "PNG", optimize=True)
             names = lambda xs: ", ".join(x["naam"] for x in xs) or "-"
             print(f"[{'dry' if DRY_RUN else 'ok'}] {p['handle']}  | links: {names(prim)}  | rechts: {names(sec)}")
