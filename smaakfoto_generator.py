@@ -490,14 +490,21 @@ def _place_cutout(cv, it, cx, cy, size, angle, shadow=True, shadow_blur=18, shad
 
 def _product_wine_color(p):
     """Wijnkleur uit Shopify's eigen 'wine-variety'-metaveld (betrouwbaar); None als het ontbreekt
-    of een onbekende waarde heeft (bijv. mousserend/versterkt) -> aanroeper valt dan terug op pixels."""
+    of een echt onbekende waarde heeft -> aanroeper valt dan terug op pixels. Dekt de volledige
+    taxonomie die in deze winkel gebruikt wordt: Rood, Wit, Rosé, Oranje, Mousserend."""
     try:
         nodes = p["metafield"]["references"]["nodes"]
         label = nodes[0]["field"]["value"].strip().lower()
     except (KeyError, IndexError, TypeError):
         return None
-    return {"rood": "rood", "red": "rood", "wit": "wit", "white": "wit",
-            "rose": "rose", "rosé": "rose", "rosee": "rose"}.get(label)
+    return {
+        "rood": "rood", "red": "rood",
+        "wit": "wit", "white": "wit",
+        "rose": "rose", "rosé": "rose", "rosee": "rose",
+        "mousserend": "wit", "sparkling": "wit", "champagne": "wit",   # meestal witte druiven -> witte wolk
+        "oranje": "rose", "orange": "rose",                            # amber/schilcontact -> dichtst bij rose-palet
+        "versterkt": "rood", "fortified": "rood",
+    }.get(label)
 
 def _wine_color(bottle_img):
     """rood/wit/rose, bepaald door de GLADSTE band te kiezen (laagste lokale variantie).
