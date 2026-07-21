@@ -12,7 +12,7 @@ uitgelijnd naast de fles plaatsen.
     rijhoogtes links/rechts, met instelbare grootte (subtiliteit).
   - Cache: elke unieke smaak wordt 1x gegenereerd en hergebruikt -> lage kosten.
 
-Kostenbeheersing: BATCH_SIZE (1/10), HANDLE (1 fles), DONE_TAG (nooit dubbel),
+Kostenbeheersing: BATCH_SIZE (1/10/25/50/100/alle), HANDLE (1 fles), DONE_TAG (nooit dubbel),
 en de cache. Verwerkte producten krijgen DONE_TAG.
 """
 
@@ -55,7 +55,7 @@ BOTTLE_PX      = env_int("BOTTLE_PX", 2000)      # fleshoogte in px
 FLAVOR_PX      = env_int("FLAVOR_PX", 260)       # max grootte van een smaak-uitsnede (subtiliteit)
 COL_MARGIN     = float(env("COL_MARGIN", "0.16"))# kolomcenter t.o.v. canvasbreedte (links/rechts)
 
-BATCH_SIZE     = env_int("BATCH_SIZE", 1)
+BATCH_SIZE     = env("BATCH_SIZE", "1")         # "1"|"10"|"25"|"50"|"100"|"alle"
 HANDLE         = env("HANDLE", "")
 DONE_TAG       = env("DONE_TAG", "smaakfoto")
 OVERWRITE      = env_bool("OVERWRITE", False)   # True = selecteer producten MET de tag en vervang hun smaakfoto
@@ -114,8 +114,9 @@ def gql(query, variables=None):
     raise RuntimeError("Te vaak gethrottled")
 
 SELECT_Q = """
-query($n: Int!, $q: String) {
-  products(first: $n, query: $q) {
+query($n: Int!, $q: String, $cursor: String) {
+  products(first: $n, after: $cursor, query: $q) {
+    pageInfo { hasNextPage endCursor }
     nodes {
       id title handle description featuredImage { url }
       media(first: 20) { nodes { ... on MediaImage { id alt } } }
@@ -132,14 +133,26 @@ mutation($productId: ID!, $mediaIds: [ID!]!) {
 
 SMAAK_ALT = "Wat je proeft"   # hieraan herkennen we de bestaande smaakfoto
 
+def _select_all(q):
+    """Paginering: Shopify geeft max 250 producten per pagina, dus doorbladeren voor 'alle'."""
+    cursor = None; out = []
+    while True:
+        d = gql(SELECT_Q, {"n": 100, "q": q, "cursor": cursor})["products"]
+        out.extend(d["nodes"])
+        if not d["pageInfo"]["hasNextPage"]:
+            break
+        cursor = d["pageInfo"]["endCursor"]
+    return out
+
 def select_products():
     if HANDLE:
-        q, n = f"handle:{HANDLE}", 1
-    elif OVERWRITE:
-        q, n = f"tag:{DONE_TAG}", BATCH_SIZE     # vervang bestaande smaakfoto's
+        nodes = gql(SELECT_Q, {"n": 1, "q": f"handle:{HANDLE}", "cursor": None})["products"]["nodes"]
     else:
-        q, n = f"-tag:{DONE_TAG}", BATCH_SIZE    # alleen nog-niet-verwerkte
-    nodes = gql(SELECT_Q, {"n": n, "q": q})["products"]["nodes"]
+        q = f"tag:{DONE_TAG}" if OVERWRITE else f"-tag:{DONE_TAG}"    # vervang bestaande / alleen nog-niet-verwerkte
+        if BATCH_SIZE.strip().lower() == "alle":
+            nodes = _select_all(q)
+        else:
+            nodes = gql(SELECT_Q, {"n": int(BATCH_SIZE), "q": q, "cursor": None})["products"]["nodes"]
     return [p for p in nodes if p.get("featuredImage") and p["featuredImage"].get("url")]
 
 def old_smaak_media_ids(p):
