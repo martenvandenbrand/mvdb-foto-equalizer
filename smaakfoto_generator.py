@@ -57,6 +57,7 @@ COL_MARGIN     = float(env("COL_MARGIN", "0.16"))# kolomcenter t.o.v. canvasbree
 
 BATCH_SIZE     = env("BATCH_SIZE", "1")         # "1"|"10"|"25"|"50"|"100"|"alle"
 HANDLE         = env("HANDLE", "")
+WIJNHUIS       = env("WIJNHUIS", "")            # producentnaam (deelstring, hoofdletterongevoelig); overstemt BATCH_SIZE
 DONE_TAG       = env("DONE_TAG", "smaakfoto")
 OVERWRITE      = env_bool("OVERWRITE", False)   # True = selecteer producten MET de tag en vervang hun smaakfoto
 AROMA_STYLE    = env("AROMA_STYLE", "kolommen") # kolommen|krans|explosie|geometrisch|aromawolk|kleurverloop|rook
@@ -122,6 +123,9 @@ query($n: Int!, $q: String, $cursor: String) {
       metafield(namespace: "shopify", key: "wine-variety") {
         references(first: 1) { nodes { ... on Metaobject { field(key: "label") { value } } } }
       }
+      wijnhuis: metafield(namespace: "custom", key: "wijnhuis_new") {
+        reference { ... on Metaobject { field(key: "bibi_graetz") { value } } }
+      }
       media(first: 20) { nodes { ... on MediaImage { id alt } } }
     }
   }
@@ -152,7 +156,16 @@ def select_products():
         nodes = gql(SELECT_Q, {"n": 1, "q": f"handle:{HANDLE}", "cursor": None})["products"]["nodes"]
     else:
         q = f"tag:{DONE_TAG}" if OVERWRITE else f"-tag:{DONE_TAG}"    # vervang bestaande / alleen nog-niet-verwerkte
-        if BATCH_SIZE.strip().lower() == "alle":
+        if WIJNHUIS.strip():
+            nodes = _select_all(q)                            # altijd alles ophalen; wijnhuis filtert hieronder
+            needle = WIJNHUIS.strip().lower()
+            def _wijnhuis_naam(p):
+                mf = p.get("wijnhuis") or {}
+                ref = mf.get("reference") or {}
+                fld = ref.get("field") or {}
+                return (fld.get("value") or "").lower()
+            nodes = [p for p in nodes if needle in _wijnhuis_naam(p)]
+        elif BATCH_SIZE.strip().lower() == "alle":
             nodes = _select_all(q)
         else:
             nodes = gql(SELECT_Q, {"n": int(BATCH_SIZE), "q": q, "cursor": None})["products"]["nodes"]
@@ -1007,7 +1020,8 @@ def main():
 
     products = select_products()
     print(f"== {'DRY-RUN' if DRY_RUN else 'LIVE'} | stijl {AROMA_STYLE} | model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) "
-          f"| fles {_bottle_px()}px op {FINAL_SIZE} | overwrite: {OVERWRITE} | {len(products)} fles(sen) ==\n")
+          f"| fles {_bottle_px()}px op {FINAL_SIZE} | overwrite: {OVERWRITE} "
+          f"| wijnhuis: {WIJNHUIS or '-'} | {len(products)} fles(sen) ==\n")
     if DRY_RUN:
         print("Let op: DRY-RUN genereert nieuwe smaken (OpenAI-kosten, maar gecacht), upload/tagt niet.\n")
 
