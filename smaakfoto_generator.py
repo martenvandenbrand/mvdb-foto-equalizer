@@ -582,13 +582,13 @@ def _font(size, variant=""):
         return ImageFont.load_default()
 
 def _script_font(size):
-    """Elegant lettertype voor labels (Fraunces SemiBold Italic, gebundeld in fonts/)."""
+    """Elegant lettertype voor labels (Fraunces Thin Italic, gebundeld in fonts/)."""
     from PIL import ImageFont
     path = pathlib.Path(__file__).parent / "fonts" / "FrauncesItalic.ttf"
     try:
         f = ImageFont.truetype(str(path), size)
         try:
-            f.set_variation_by_name("SemiBold Italic")
+            f.set_variation_by_name("Thin Italic")
         except Exception:
             pass
         return f
@@ -752,14 +752,18 @@ def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, 
     return cx_guess, cy_guess                                  # geen enkel pixel gevonden (lege wolk) -> gok blijft staan
 
 def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_step=4,
-                      y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0)):
+                      y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0),
+                      max_y_radius=None):
     """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte.
     gap_fracs dwingt eerst een duidelijke afstand tot het midden af (zichtbaar links/rechts),
-    en versoepelt pas als de wolk daar simpelweg geen verf heeft."""
+    en versoepelt pas als de wolk daar simpelweg geen verf heeft. max_y_radius begrenst hoe ver
+    de zoektocht verticaal mag afdwalen (bijv. tot het eigen vak), zodat een item nooit het vak
+    van zijn buurman binnenloopt."""
     a = cloud.getchannel("A")
+    radii = [r for r in y_radii if max_y_radius is None or r <= max_y_radius]
     for gap_frac in gap_fracs:
         gap = int(cloud.width * gap_frac)
-        for r in y_radii:
+        for r in radii:
             for ly in ({ly_target} if r == 0 else {ly_target - r, ly_target + r}):
                 if not (0 <= ly < cloud.height):
                     continue
@@ -772,7 +776,7 @@ def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_s
                     return (c < half - gap) if side < 0 else (c > half + gap)
                 pref = [c for c in row if ok(c)]
                 if pref:
-                    return rnd.choice(pref), ly
+                    return (min(pref) if side < 0 else max(pref)), ly
     return None, ly_target
 
 def _smooth_line(cv, p1, p2, color, width=1.3, curve=0.12, supersample=4):
@@ -848,21 +852,25 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     items = _by_type(prim + sec)
     top = cloud_cy - int(cloud.height * 0.42)
     bottom = bottle_top + int(bp * 0.12)
-    band = max((bottom - top) / max(len(items), 1), 1)
+    n = max(len(items), 1)
+    band = (bottom - top) / n                                # de beschikbare ruimte in exact gelijke vakken
     placements = []                                          # (cx, cy, size, side, naam) -> labels na de fles tekenen
     for i, it in enumerate(items):
         size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
         side = -1 if i % 2 == 0 else 1
-        cy_target = int(top + band * (i + 0.5) + rnd.uniform(-band * 0.15, band * 0.15))
+        cy_target = int(top + band * (i + 0.5))               # midden van het vak, nauwelijks jitter
         half = cloud.width // 2
         excl = None
         if cy_target + size // 2 > bottle_top:                 # nabij de hals: fles-kolom uitsluiten
             min_off = nw // 2 + size // 2 + 24
             excl = (cloud_cx - min_off - cloud_pos[0], cloud_cx + min_off - cloud_pos[0])
-        lx, ly = _find_cloud_point(cloud, rnd, cy_target - cloud_pos[1], side, half, excl)
+        lx, ly = _find_cloud_point(cloud, rnd, cy_target - cloud_pos[1], side, half, excl,
+                                   max_y_radius=band * 0.48)     # 1e voorkeur: blijf binnen het eigen vak
+        if lx is None:                                           # eigen vak heeft nergens bruikbare verf -> verder zoeken
+            lx, ly = _find_cloud_point(cloud, rnd, cy_target - cloud_pos[1], side, half, excl)
         if lx is not None:
             cx, cy = cloud_pos[0] + lx, cloud_pos[1] + ly
-        else:                                                   # allerlaatste redmiddel: dichtstbijzijnde wolk waar dan ook
+        else:                                                   # absolute laatste redmiddel: dichtstbijzijnde wolk waar dan ook
             cx, cy = _nearest_paint(cloud, cloud_pos,
                                     cx_guess=cloud_cx + side * int(0.20 * cloud.width), cy_guess=cy_target)
         cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
