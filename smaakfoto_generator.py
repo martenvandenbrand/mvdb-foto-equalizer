@@ -494,6 +494,24 @@ def _style_cfg():
 def _bottle_px():
     return env_int("BOTTLE_PX", _style_cfg()["bottle_px"])
 
+def _bottle_rect(N):
+    """Het rechthoekige gebied dat de fles inneemt (in canvas-coördinaten), voor botsingscontrole."""
+    bp = _bottle_px()
+    y0 = (N - bp) // 2 if _style_cfg()["anchor"] == "center" else N - bp - 40
+    return (y0, y0 + bp)                                       # (top, bottom); horizontaal = rond het midden
+
+def _avoid_bottle(cx, cy, size, N, nw, bottle_top, bottle_bottom, side=None, margin=24):
+    """Laatste, universele veiligheidscheck: duwt een item radiaal weg van het midden als het
+    (met een rotatiebestendige marge) alsnog over de fles zou vallen. Werkt voor elke stijl,
+    ongeacht via welk pad (cx,cy) gevonden is."""
+    half_extent = int(size * 0.66)                              # dekt rotatie tot ~20-25 graden
+    if bottle_top - half_extent < cy < bottle_bottom + half_extent:
+        min_off = nw // 2 + half_extent + margin
+        if abs(cx - N // 2) < min_off:
+            richting = side if side else (1 if cx >= N // 2 else -1)
+            cx = N // 2 + richting * min_off
+    return cx
+
 def _paste_bottle(cv, bottle_img):
     """Echte fles bovenop; hoogte per stijl, center- of bottom-verankerd."""
     N = cv.size[0]
@@ -665,17 +683,23 @@ def _compose_krans(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; items = _by_type(prim + sec); n = max(len(items), 1)
     rnd = random.Random(seed)
     rx, ry = N * 0.36, N * 0.38
+    b = _trim(bottle); bw, bh = b.size; bp = _bottle_px()
+    nw = max(1, round(bw * bp / bh))
+    bottle_top, bottle_bottom = _bottle_rect(N)
     for i, it in enumerate(items):                            # hoofdring
         a = -math.pi / 2 + 2 * math.pi * i / n
         cx = int(N / 2 + rx * math.cos(a)); cy = int(N / 2 + ry * math.sin(a))
-        _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.75, 1.0)), rnd.uniform(-14, 14))
+        size = int(FLAVOR_PX * rnd.uniform(0.75, 1.0))
+        cx = _avoid_bottle(cx, cy, size, N, nw, bottle_top, bottle_bottom)
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-14, 14))
     for i in range(n):                                        # verdichting: kleine herhalingen ertussen
         it = items[(i + 2) % n]                               # ander item dan de buren
         a = -math.pi / 2 + 2 * math.pi * (i + 0.5) / n
         f = rnd.uniform(0.88, 1.10)                           # afwisselend iets binnen/buiten de ring
         cx = int(N / 2 + rx * f * math.cos(a)); cy = int(N / 2 + ry * f * math.sin(a))
-        _place_cutout(cv, it, cx, cy, int(FLAVOR_PX * rnd.uniform(0.38, 0.50)),
-                      rnd.uniform(-25, 25), shadow=False)
+        size = int(FLAVOR_PX * rnd.uniform(0.38, 0.50))
+        cx = _avoid_bottle(cx, cy, size, N, nw, bottle_top, bottle_bottom)
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-25, 25), shadow=False)
     _paste_bottle(cv, bottle)
 
 def _compose_explosie(cv, bottle, prim, sec, seed, kleur_override=None):
@@ -683,18 +707,21 @@ def _compose_explosie(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; items = prim + sec
     rnd = random.Random(seed)
     bp = _bottle_px()
-    neck = (N // 2, N - 40 - bp + int(bp * 0.04))           # rond de flessenhals
+    bottle_top, _bottom = _bottle_rect(N)
+    neck = (N // 2, bottle_top + int(bp * 0.04))             # rond de flessenhals (voor hoek/straal-berekening)
     max_r = neck[1] - int(N * 0.05)                          # tot vlak onder de bovenrand
     placed = []                                              # (cx, cy, size) voor botsingscontrole
 
-    def try_place(it, size, r_lo, r_hi):
+    def try_place(it, size, r_lo, r_hi, max_angle):
+        half_extent = int(size * 0.70)                        # rotatiebestendige marge (tot ~35-40 graden)
+        cy_cap = bottle_top - half_extent - 10                # nooit dichter bij de fles dan dit, ongeacht rotatie
         best = None; best_d = -1e18
         for _ in range(90):
             a = math.radians(rnd.uniform(195, 345))          # bovenste helft
             r = rnd.uniform(r_lo, r_hi) * max_r
             cx = int(neck[0] + r * math.cos(a)); cy = int(neck[1] + r * math.sin(a))
             cx = max(size // 2 + 20, min(N - size // 2 - 20, cx))
-            cy = max(size // 2 + 20, min(neck[1] - size // 4, cy))
+            cy = max(size // 2 + 20, min(cy_cap, cy))
             d = min((math.hypot(cx - px, cy - py) - (size + ps) * 0.50
                      for px, py, ps in placed), default=1e9)
             if d >= 0:                                        # geen overlap -> meteen goed
@@ -706,17 +733,20 @@ def _compose_explosie(cv, bottle, prim, sec, seed, kleur_override=None):
     order = _by_type(items)
     for it in order:                                          # groot, dicht bij de hals
         size = int(FLAVOR_PX * rnd.uniform(0.85, 1.05))
-        cx, cy = try_place(it, size, 0.18, 0.55)
+        cx, cy = try_place(it, size, 0.18, 0.55, 25)
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-25, 25))
     for it in order:                                          # klein, verder naar buiten
         size = int(FLAVOR_PX * rnd.uniform(0.40, 0.55))
-        cx, cy = try_place(it, size, 0.55, 0.95)
+        cx, cy = try_place(it, size, 0.55, 0.95, 35)
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-35, 35), shadow=False)
     _paste_bottle(cv, bottle)
 
 def _compose_geometrisch(cv, bottle, prim, sec, seed, kleur_override=None):
     from PIL import ImageDraw
     N = cv.size[0]; rnd = random.Random(seed)
+    b = _trim(bottle); bw, bh = b.size; bp = _bottle_px()
+    nw = max(1, round(bw * bp / bh))
+    bottle_top, bottle_bottom = _bottle_rect(N)
     lay = Image.new("RGBA", (N, N), (0, 0, 0, 0)); d = ImageDraw.Draw(lay)
     gold = (196, 160, 90, 200)
     for _ in range(3):                                       # dunne gouden ringen
@@ -725,8 +755,10 @@ def _compose_geometrisch(cv, bottle, prim, sec, seed, kleur_override=None):
     for it in prim + sec:                                    # gekleurde cirkels per smaaktype
         col = TYPE_COLORS.get(it.get("type", "overig"), TYPE_COLORS["overig"])
         r = rnd.randint(80, 170)
-        side = rnd.choice([rnd.uniform(0.08, 0.30), rnd.uniform(0.70, 0.92)])   # links of rechts van de fles
-        cx = int(side * N); cy = rnd.randint(int(N*0.12), int(N*0.85))
+        side = -1 if rnd.random() < 0.5 else 1                # links of rechts van de fles
+        cx = int(side * rnd.uniform(0.08, 0.30) * N + (N if side > 0 else 0))
+        cy = rnd.randint(int(N*0.12), int(N*0.85))
+        cx = _avoid_bottle(cx, cy, r * 2, N, nw, bottle_top, bottle_bottom, side=side, margin=10)
         d.ellipse([cx-r, cy-r, cx+r, cy+r], fill=col + (rnd.randint(170, 235),))
     for _ in range(4):                                       # kleine gouden accenten
         cx = rnd.randint(int(N*0.1), int(N*0.9)); cy = rnd.randint(int(N*0.1), int(N*0.9)); r = rnd.randint(10, 22)
@@ -893,6 +925,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     bottom = bottle_top + int(bp * 0.12)
     n = max(len(items), 1)
     band = (bottom - top) / n                                # de beschikbare ruimte in exact gelijke vakken
+    bottle_top_r, bottle_bottom_r = _bottle_rect(N)
     placements = []                                          # (cx, cy, size, side, naam) -> labels na de fles tekenen
     for i, it in enumerate(items):
         size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
@@ -912,6 +945,8 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
         else:                                                   # absolute laatste redmiddel: dichtstbijzijnde wolk waar dan ook
             cx, cy = _nearest_paint(cloud, cloud_pos,
                                     cx_guess=cloud_cx + side * int(0.20 * cloud.width), cy_guess=cy_target)
+        # universele eindcontrole: ongeacht welk pad hierboven (cx,cy) opleverde, nooit over de fles
+        cx = _avoid_bottle(cx, cy, size, N, nw, bottle_top_r, bottle_bottom_r, side=side)
         cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
         _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                       shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
