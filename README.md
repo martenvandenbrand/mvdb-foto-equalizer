@@ -121,3 +121,33 @@ gebundeld in `fonts/FrauncesItalic.ttf`. Het verbindingslijntje wordt met
 supersampling getekend (anti-aliased) en heeft een lichte, willekeurige boog per
 smaak, zodat het zacht en handgeschreven oogt in plaats van hoekig. De fles wordt
 vóór de labels getekend, zodat een label nooit door de capsule kan worden afgesneden.
+
+### Batchgrootte
+`batch_size` heeft nu ook 25, 50, 100 en **alle**. Bij "alle" doorbladert het
+script automatisch (Shopify geeft max 250 producten per pagina), dus dat werkt
+ook ruim voorbij je huidige catalogusgrootte. Combineer met `overwrite` om in
+één run de hele catalogus opnieuw te genereren — let dan wel op de
+kostenregel onderaan de run.
+
+### Alle wijnen van 1 wijnhuis
+`wijnhuis` (deelstring van de producentnaam, bv. `Marqués de Murrieta`) selecteert
+alle wijnen van die producent, ongeacht `batch_size`. Zoekt in het `custom.wijnhuis_new`-
+metaveld, hoofdletterongevoelig en op deelstring — `murrieta` vindt dus ook
+"Marqués de Murrieta". Leeg laten = normaal gedrag via `batch_size`.
+
+### Toestemming vóór elke OpenAI-uitgave
+De workflow bestaat nu uit twee jobs:
+
+1. **voorcalculatie** — draait altijd, kost niets. Bepaalt zonder ook maar 1 OpenAI-call welke
+   smaak-extracties en smaak-afbeeldingen nog ontbreken in de cache, en print dat met reden en
+   een kostenschatting in het log.
+2. **genereren** — de echte run. Deze job wacht op goedkeuring via de `openai-approval`-environment
+   voordat er ook maar iets wordt aangeroepen of uitgegeven.
+
+**Eenmalige instelling** (per repo): Settings → Environments → New environment → naam
+`openai-approval` → vink **Required reviewers** aan → voeg jezelf (of wie mag goedkeuren) toe →
+Save protection rules.
+
+Na het starten van de Action zie je eerst het log van `voorcalculatie` met wat er nodig is en
+waarom. Wil je doorgaan, klik dan op **Review deployments → Approve and deploy** bij de
+`genereren`-job. Zonder die klik gebeurt er niets — geen call, geen kosten.

@@ -119,7 +119,7 @@ query($n: Int!, $q: String, $cursor: String) {
   products(first: $n, after: $cursor, query: $q) {
     pageInfo { hasNextPage endCursor }
     nodes {
-      id title handle description featuredImage { url }
+      id title handle description featuredImage { url } tags
       metafield(namespace: "shopify", key: "wine-variety") {
         references(first: 1) { nodes { ... on Metaobject { field(key: "label") { value } } } }
       }
@@ -163,18 +163,24 @@ def _select_all(q):
 def select_products():
     if HANDLE:
         nodes = gql(SELECT_Q, {"n": 1, "q": f"handle:{HANDLE}", "cursor": None})["products"]["nodes"]
+    elif WIJNHUIS.strip():
+        needle = _norm_wijnhuis(WIJNHUIS)
+        def _wijnhuis_naam(p):
+            mf = p.get("wijnhuis") or {}
+            ref = mf.get("reference") or {}
+            fld = ref.get("field") or {}
+            return _norm_wijnhuis(fld.get("value") or "")
+        alle_van_producent = [p for p in _select_all(None) if needle in _wijnhuis_naam(p)]   # los van de tag
+        nodes = [p for p in alle_van_producent
+                if (DONE_TAG in (p.get("tags") or [])) == OVERWRITE]                         # dan pas de tag toepassen
+        if alle_van_producent and not nodes:
+            klaar = sum(1 for p in alle_van_producent if DONE_TAG in (p.get("tags") or []))
+            print(f"[info] {len(alle_van_producent)} wijn(en) gevonden voor '{WIJNHUIS}', maar allemaal al "
+                  f"verwerkt ({klaar}/{len(alle_van_producent)} hebben de tag '{DONE_TAG}'). "
+                  f"Zet 'overwrite' aan om ze opnieuw te genereren.")
     else:
         q = f"tag:{DONE_TAG}" if OVERWRITE else f"-tag:{DONE_TAG}"    # vervang bestaande / alleen nog-niet-verwerkte
-        if WIJNHUIS.strip():
-            nodes = _select_all(q)                            # altijd alles ophalen; wijnhuis filtert hieronder
-            needle = _norm_wijnhuis(WIJNHUIS)
-            def _wijnhuis_naam(p):
-                mf = p.get("wijnhuis") or {}
-                ref = mf.get("reference") or {}
-                fld = ref.get("field") or {}
-                return _norm_wijnhuis(fld.get("value") or "")
-            nodes = [p for p in nodes if needle in _wijnhuis_naam(p)]
-        elif BATCH_SIZE.strip().lower() == "alle":
+        if BATCH_SIZE.strip().lower() == "alle":
             nodes = _select_all(q)
         else:
             nodes = gql(SELECT_Q, {"n": int(BATCH_SIZE), "q": q, "cursor": None})["products"]["nodes"]
@@ -1018,6 +1024,66 @@ def compose(bottle_img, prim, sec, seed=0, kleur_override=None):
 
 
 # ------------------------- Hoofdroutine -------------------------
+def _estimate_image_cost(model, quality):
+    """Vaste output-tokens per kwaliteitsniveau (OpenAI's beeld-API), dus vooraf te berekenen
+    zonder ook maar 1 call te doen. Ruwe schatting; input-tokens (prompt) tellen licht mee."""
+    OUT_TOKENS = {"low": 272, "medium": 1056, "high": 4160}
+    rates = IMG_RATES.get(model, IMG_RATES["gpt-image-1.5"])
+    out_t = OUT_TOKENS.get(quality, 1056)
+    return out_t * rates["out"] + 120 * rates["in"]           # ~120 input-tokens voor een gemiddelde prompt
+
+def preflight():
+    """Bepaalt ZONDER ook maar 1 OpenAI-call wat een run zou kosten: welke smaak-extracties en
+    welke smaak-uitsnedes ontbreken nog in de cache. Print dat duidelijk en stopt daarna."""
+    global _access_token
+    if not CLIENT_ID or not CLIENT_SECRET or SHOP.startswith("jouwwinkel"):
+        sys.exit("Ontbrekende SHOP / SHOPIFY_CLIENT_ID / SHOPIFY_CLIENT_SECRET.")
+    _access_token = get_access_token()
+
+    products = select_products()
+    meta = _load_meta()
+    nieuwe_extracties = [p["handle"] for p in products if p["handle"] not in meta]
+
+    nodige_smaken = {}                                          # canonieke naam -> voorbeeld-item (voor het type)
+    for p in products:
+        if p["handle"] in meta:
+            e = meta[p["handle"]]
+            prim, sec = e.get("primair", []), e.get("secundair", [])
+        else:
+            prim, sec = [], []                                  # nog te extraheren; smaken pas na extractie bekend
+        prim, sec = _prep_flavors(prim, sec)
+        for it in prim + sec:
+            nodige_smaken.setdefault(it["naam"], it)
+
+    suf = f"-{CUTOUT_SOURCE}.png"
+    ontbrekende_cutouts = [naam for naam in nodige_smaken if not (CACHE_DIR / f"{_slug(naam)}{suf}").exists()]
+
+    per_extractie = 2000 * TXT_IN_RATE + 150 * TXT_OUT_RATE     # ruwe schatting per beschrijving
+    per_beeld = _estimate_image_cost(OPENAI_IMAGE_MODEL, IMAGE_QUALITY)
+    kosten_extractie = len(nieuwe_extracties) * per_extractie
+    kosten_beelden = len(ontbrekende_cutouts) * per_beeld
+    totaal = kosten_extractie + kosten_beelden
+
+    print(f"== VOORCALCULATIE | {len(products)} fles(sen) geselecteerd | stijl {AROMA_STYLE} | "
+          f"model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) ==\n")
+    if not nieuwe_extracties and not ontbrekende_cutouts:
+        print("Geen enkele OpenAI-call nodig -- alles komt uit de cache. Veilig om direct te genereren.")
+        return
+    print("Er zijn OpenAI-calls nodig om deze run te voltooien:\n")
+    if nieuwe_extracties:
+        print(f"  - {len(nieuwe_extracties)}x smaak-extractie (tekstmodel {OPENAI_TEXT_MODEL})")
+        print(f"    Waarom: voor deze wijn(en) staan de smaken nog niet in flavor_meta.json:")
+        print(f"    {', '.join(nieuwe_extracties[:15])}" + (" ..." if len(nieuwe_extracties) > 15 else ""))
+    if ontbrekende_cutouts:
+        print(f"\n  - {len(ontbrekende_cutouts)}x nieuwe smaakafbeelding ({OPENAI_IMAGE_MODEL}, {IMAGE_QUALITY})")
+        print(f"    Waarom: deze smaken staan nog niet als uitsnede in flavor_cache/:")
+        print(f"    {', '.join(sorted(ontbrekende_cutouts)[:15])}" + (" ..." if len(ontbrekende_cutouts) > 15 else ""))
+    print(f"\nGeschatte totale kosten: ~${totaal:.2f} "
+          f"(extractie ~${kosten_extractie:.2f} + beelden ~${kosten_beelden:.2f})")
+    print("\nGeef toestemming door de volgende job ('genereren') goed te keuren in de Actions-run "
+          "(Review deployments -> Approve). Zonder goedkeuring wordt er niets aangeroepen of uitgegeven.")
+
+
 def main():
     global _access_token
     if not CLIENT_ID or not CLIENT_SECRET or SHOP.startswith("jouwwinkel"):
@@ -1067,4 +1133,7 @@ def main():
     print(f"Beelden in: {BACKUP_DIR.resolve()} | cache: {CACHE_DIR.resolve()}")
 
 if __name__ == "__main__":
-    main()
+    if env_bool("PREFLIGHT_ONLY", False):
+        preflight()
+    else:
+        main()
