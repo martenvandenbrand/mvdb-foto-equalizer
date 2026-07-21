@@ -758,20 +758,27 @@ def _smooth_line(cv, p1, p2, color, width=1.3, curve=0.12, supersample=4):
     cv.alpha_composite(layer, (int(minx), int(miny)))
 
 def _label_line(cv, cx, cy, side, size, naam, rnd):
-    """Dun, subtiel lijntje van de smaak naar een elegant tekstlabel, weg van de fles."""
+    """Dun, subtiel lijntje van de smaak naar een elegant tekstlabel, weg van de fles.
+    Gelijke witruimte aan beide uiteinden; de lijn eindigt op de verticale MIDDEN-hoogte
+    van het lettertype (niet aan de bovenkant)."""
     ink = (95, 75, 60, 150)
     f = _script_font(52)
-    length = rnd.uniform(70, 110)
-    sx, sy = cx + side * (size // 2 + 4), cy + rnd.uniform(-6, 6)
-    ex, ey = sx + side * length, sy + rnd.uniform(-14, 14)
-    _smooth_line(cv, (sx, sy), (ex, ey), ink, width=1.3, curve=rnd.uniform(-0.14, 0.14))
+    pad = 10                                                   # zelfde witruimte: item->lijn en lijn->tekst
     d = ImageDraw.Draw(cv)
     label = naam.capitalize()
-    tw = d.textlength(label, font=f)
-    tx = ex + 8 if side > 0 else ex - 8 - tw
+    l, t, r, b = d.textbbox((0, 0), label, font=f)             # echte glyph-afmetingen (incl. boven-/onderhang)
+    tw, th = r - l, b - t
+
+    length = rnd.uniform(70, 110)
+    sx, sy = cx + side * (size // 2 + pad), cy + rnd.uniform(-6, 6)
+    ex, ey = sx + side * length, sy + rnd.uniform(-14, 14)     # ey = verticale middenhoogte van het label
+    _smooth_line(cv, (sx, sy), (ex, ey), ink, width=1.3, curve=rnd.uniform(-0.14, 0.14))
+
+    tx = ex + pad if side > 0 else ex - pad - tw
+    ty = ey - t - th / 2                                       # tekst zo plaatsen dat zijn midden op ey valt
     N = cv.size[0]
     tx = max(14, min(N - 14 - tw, tx))
-    d.text((tx, ey - 24), label, font=f, fill=(95, 75, 60, 235))
+    d.text((tx, ty), label, font=f, fill=(95, 75, 60, 235))
 
 def _compose_aromawolk(cv, bottle, prim, sec, seed):
     N = cv.size[0]; rnd = random.Random(seed)
