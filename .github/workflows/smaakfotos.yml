@@ -16,7 +16,7 @@ on:
         description: "Stijl van de smaakfoto"
         type: choice
         options: ["kolommen", "krans", "explosie", "geometrisch", "constellatie", "aromawolk", "kleurverloop", "rook"]
-        default: "kolommen"
+        default: "aromawolk"
       overwrite:
         description: "Bestaande smaakfoto's vervangen (selecteert producten MET de tag)"
         type: boolean
@@ -39,7 +39,7 @@ on:
         description: "Grootte van de smaken in px (subtiliteit)"
         type: choice
         options: ["220", "260", "320", "400", "480", "560"]
-        default: "260"
+        default: "320"
       merge_colors:
         description: "Kleur/rijpheid samenvoegen (rode+zwarte kers -> kers) — goedkoper"
         type: boolean
