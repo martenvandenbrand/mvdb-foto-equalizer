@@ -3746,7 +3746,7 @@
         "type": "citrus"
       },
       {
-        "naam": "fruit",
+        "naam": "wit fruit",
         "type": "fruit"
       },
       {
@@ -3760,7 +3760,7 @@
     ],
     "secundair": [
       {
-        "naam": "zout",
+        "naam": "ziltigheid",
         "type": "kruid"
       },
       {
@@ -3777,6 +3777,10 @@
       },
       {
         "naam": "framboos",
+        "type": "fruit"
+      },
+      {
+        "naam": "watermeloen",
         "type": "fruit"
       }
     ],
@@ -3931,7 +3935,7 @@
         "type": "fruit"
       },
       {
-        "naam": "zoute",
+        "naam": "ziltigheid",
         "type": "kruid"
       }
     ]
