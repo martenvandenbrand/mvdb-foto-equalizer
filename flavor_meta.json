@@ -1002,7 +1002,7 @@
         "type": "fruit"
       },
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -1019,7 +1019,7 @@
   "carlo-schmitt-kowericher-laurentiuslay-riesling-kabinett-2025": {
     "primair": [
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -1197,7 +1197,7 @@
         "type": "citrus"
       },
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -1468,7 +1468,7 @@
         "type": "fruit"
       },
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -2161,7 +2161,7 @@
         "type": "fruit"
       },
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -2528,7 +2528,7 @@
   "es-fangar-vins-sa-sivina-blanc-2023": {
     "primair": [
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -2958,7 +2958,7 @@
   "jean-claude-ramonet-chassagne-montrachet-doudriotte-2019": {
     "primair": [
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -3009,7 +3009,7 @@
   "jean-claude-ramonet-puligny-montrachet-enseignieres-2019": {
     "primair": [
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
@@ -3819,7 +3819,15 @@
         "type": "citrus"
       },
       {
+        "naam": "witte perzik",
+        "type": "fruit"
+      },
+      {
         "naam": "bloemen",
+        "type": "bloem"
+      },
+      {
+        "naam": "jasmijn",
         "type": "bloem"
       }
     ],
@@ -4019,7 +4027,7 @@
   "scions-of-sinai-granietsteen-chenin-blanc-2024": {
     "primair": [
       {
-        "naam": "witte perzik",
+        "naam": "",
         "type": "fruit"
       },
       {
