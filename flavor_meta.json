@@ -3913,8 +3913,8 @@
         "type": "citrus"
       },
       {
-        "naam": "limoen",
-        "type": "citrus"
+        "naam": "perzik",
+        "type": "fruit"
       }
     ],
     "secundair": [
@@ -3929,10 +3929,6 @@
       {
         "naam": "natte steen",
         "type": "hout"
-      },
-      {
-        "naam": "perzik",
-        "type": "fruit"
       },
       {
         "naam": "ziltigheid",
