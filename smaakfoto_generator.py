@@ -17,6 +17,10 @@ en de cache. Verwerkte producten krijgen DONE_TAG.
 """
 
 import os, io, sys, json, time, base64, html, re, pathlib, random, zlib, requests
+try:
+    sys.stdout.reconfigure(line_buffering=True)   # zonder dit blijft output hangen tot de buffer vol is/het script stopt
+except Exception:
+    pass
 from PIL import Image, ImageFilter, ImageDraw
 
 def env(k, d=""):   return os.environ.get(k, d)
@@ -1101,12 +1105,15 @@ def main():
         print("Let op: DRY-RUN genereert nieuwe smaken (OpenAI-kosten, maar gecacht), upload/tagt niet.\n")
 
     done = failed = 0
-    for p in products:
+    start = time.time()
+    n_total = len(products)
+    for i, p in enumerate(products, 1):
+        t0 = time.time()
         try:
             prim, sec = extract_flavors(p["handle"], p.get("description"))
             prim, sec = _prep_flavors(prim, sec)
             if not prim and not sec:
-                print(f"[skip] {p['handle']}: geen (bruikbare) smaken in beschrijving"); continue
+                print(f"[{i}/{n_total}] [skip] {p['handle']}: geen (bruikbare) smaken in beschrijving"); continue
             prim, sec = _balance(prim, sec)
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
             kleur_override = _product_wine_color(p)          # betrouwbaar Shopify-veld; None = val terug op pixels
@@ -1114,13 +1121,23 @@ def main():
                             seed=zlib.crc32(p["handle"].encode()), kleur_override=kleur_override)
             final.save(BACKUP_DIR / f"{p['handle']}-smaak.png", "PNG", optimize=True)
             names = lambda xs: ", ".join(x["naam"] for x in xs) or "-"
-            print(f"[{'dry' if DRY_RUN else 'ok'}] {p['handle']}  | links: {names(prim)}  | rechts: {names(sec)}")
+            dt = time.time() - t0
+            print(f"[{i}/{n_total}] [{'dry' if DRY_RUN else 'ok'}] {p['handle']}  ({dt:.1f}s)  "
+                  f"| links: {names(prim)}  | rechts: {names(sec)}")
             if not DRY_RUN:
                 buf = io.BytesIO(); final.save(buf, "PNG", optimize=True)
                 upload_and_attach(p["id"], buf.getvalue(), p["handle"], old_ids=old_smaak_media_ids(p))
             done += 1
         except Exception as e:
-            print(f"[ERR] {p.get('handle')}: {e}"); failed += 1
+            print(f"[{i}/{n_total}] [ERR] {p.get('handle')}: {e}"); failed += 1
+
+        if i % 10 == 0 or i == n_total:                       # tussentijdse voortgang bij grote batches
+            elapsed = time.time() - start
+            rates = IMG_RATES.get(OPENAI_IMAGE_MODEL, IMG_RATES["gpt-image-1.5"])
+            lopend = (_cost["img_in"] * rates["in"] + _cost["img_out"] * rates["out"]
+                     + _cost["txt_in"] * TXT_IN_RATE + _cost["txt_out"] * TXT_OUT_RATE)
+            print(f"   -- voortgang: {i}/{n_total} | {done} ok, {failed} fout | "
+                  f"{elapsed:.0f}s verstreken | kosten tot nu toe: ~${lopend:.2f} --")
 
     print(f"\nKlaar. Verwerkt: {done} | fouten: {failed}")
     rates = IMG_RATES.get(OPENAI_IMAGE_MODEL, IMG_RATES["gpt-image-1.5"])
