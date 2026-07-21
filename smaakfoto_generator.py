@@ -140,6 +140,15 @@ mutation($productId: ID!, $mediaIds: [ID!]!) {
 
 SMAAK_ALT = "Wat je proeft"   # hieraan herkennen we de bestaande smaakfoto
 
+def _norm_wijnhuis(s):
+    """Ongevoelig voor streepjes/underscores i.p.v. spaties (zoals een URL-slug) en voor accenten
+    (São -> Sao), zodat 'quinta-sao-giao' matcht met de echte naam 'Quinta Sao Giao'."""
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode("ascii")
+    s = re.sub(r"[-_]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s.strip().lower()
+
 def _select_all(q):
     """Paginering: Shopify geeft max 250 producten per pagina, dus doorbladeren voor 'alle'."""
     cursor = None; out = []
@@ -158,12 +167,12 @@ def select_products():
         q = f"tag:{DONE_TAG}" if OVERWRITE else f"-tag:{DONE_TAG}"    # vervang bestaande / alleen nog-niet-verwerkte
         if WIJNHUIS.strip():
             nodes = _select_all(q)                            # altijd alles ophalen; wijnhuis filtert hieronder
-            needle = WIJNHUIS.strip().lower()
+            needle = _norm_wijnhuis(WIJNHUIS)
             def _wijnhuis_naam(p):
                 mf = p.get("wijnhuis") or {}
                 ref = mf.get("reference") or {}
                 fld = ref.get("field") or {}
-                return (fld.get("value") or "").lower()
+                return _norm_wijnhuis(fld.get("value") or "")
             nodes = [p for p in nodes if needle in _wijnhuis_naam(p)]
         elif BATCH_SIZE.strip().lower() == "alle":
             nodes = _select_all(q)
