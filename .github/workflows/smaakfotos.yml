@@ -54,8 +54,39 @@ on:
         default: false
 
 jobs:
-  smaakfotos:
+  voorcalculatie:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Installeer dependencies
+        run: pip install -r requirements.txt
+
+      - name: Bereken welke OpenAI-calls nodig zijn (géén calls, alleen tellen)
+        env:
+          SHOP: ${{ secrets.SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          PREFLIGHT_ONLY: "true"
+          BATCH_SIZE: ${{ inputs.batch_size }}
+          HANDLE: ${{ inputs.handle }}
+          WIJNHUIS: ${{ inputs.wijnhuis }}
+          OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
+          IMAGE_QUALITY: ${{ inputs.image_quality }}
+          AROMA_STYLE: ${{ inputs.aroma_stijl }}
+          OVERWRITE: ${{ inputs.overwrite }}
+        run: python smaakfoto_generator.py
+
+  genereren:
+    needs: voorcalculatie
+    runs-on: ubuntu-latest
+    # Deze environment pauzeert de run en toont een "Review deployments"-knop, zichtbaar in de
+    # Actions-run naast het log van de voorcalculatie hierboven. Pas GEEN OpenAI-call gebeurt
+    # voordat een reviewer op Approve klikt. Eenmalige instelling: Settings -> Environments ->
+    # New environment "openai-approval" -> vink "Required reviewers" aan en voeg jezelf toe.
+    environment: openai-approval
     permissions:
       contents: write        # nodig om de cache-map terug te committen
     steps:
