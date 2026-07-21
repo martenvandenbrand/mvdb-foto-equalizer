@@ -12,6 +12,10 @@ on:
         description: "1 specifieke fles (URL-slug). Ingevuld = alleen deze fles"
         type: string
         default: ""
+      wijnhuis:
+        description: "Alle wijnen van 1 wijnhuis (deelstring van de producentnaam, bv. 'Marqués de Murrieta'). Overstemt batch_size"
+        type: string
+        default: ""
       aroma_stijl:
         description: "Stijl van de smaakfoto"
         type: choice
@@ -75,6 +79,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           BATCH_SIZE: ${{ inputs.batch_size }}
           HANDLE: ${{ inputs.handle }}
+          WIJNHUIS: ${{ inputs.wijnhuis }}
           DRY_RUN: ${{ inputs.dry_run }}
           OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
           IMAGE_QUALITY: ${{ inputs.image_quality }}
