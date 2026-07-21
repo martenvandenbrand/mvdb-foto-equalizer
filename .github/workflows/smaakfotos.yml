@@ -66,6 +66,7 @@ jobs:
 
       - name: Bereken welke OpenAI-calls nodig zijn (géén calls, alleen tellen)
         env:
+          PYTHONUNBUFFERED: "1"
           SHOP: ${{ secrets.SHOP }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
@@ -104,6 +105,7 @@ jobs:
 
       - name: Genereer smaakfoto's
         env:
+          PYTHONUNBUFFERED: "1"
           SHOP: ${{ secrets.SHOP }}
           SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
           SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
