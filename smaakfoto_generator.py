@@ -760,11 +760,6 @@ def _cloud_variant(cloud, seed):
         cloud = cloud.rotate(angle, expand=True, resample=Image.BICUBIC)
     return cloud
 
-def _alpha_at(img, x, y):
-    if 0 <= x < img.width and 0 <= y < img.height:
-        return img.getpixel((x, y))[3]
-    return 0
-
 def _gold_speckles(cv, cloud, cloud_pos, seed, kleur="rood", n=16):
     from PIL import ImageDraw
     rnd = random.Random(seed + 999)
@@ -784,62 +779,6 @@ def _gold_speckles(cv, cloud, cloud_pos, seed, kleur="rood", n=16):
         op = rnd.randint(120, 220)
         d.ellipse([x - r, y - r, x + r, y + r], fill=color + (op,))
         placed += 1
-
-def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=50, step=10, max_r=None, excl_x=None):
-    """Absolute allerlaatste redmiddel: dichtstbijzijnde punt met echte wolk-verf, rondom een gok.
-    excl_x (lokale x-range) wordt overgeslagen, zodat dit ook de flesuitsluiting respecteert."""
-    a = cloud.getchannel("A")
-    lx0, ly0 = cx_guess - cloud_pos[0], cy_guess - cloud_pos[1]
-    max_r = max_r or max(cloud.size)
-    def ok(lx):
-        return not (excl_x and excl_x[0] < lx < excl_x[1])
-    for r in range(0, max_r, step):
-        for dx in range(-r, r + 1, step):
-            for dy in (-r, r) if r else (0,):
-                lx, ly = lx0 + dx, ly0 + dy
-                if 0 <= lx < cloud.width and 0 <= ly < cloud.height and ok(lx) and a.getpixel((lx, ly)) >= threshold:
-                    return cloud_pos[0] + lx, cloud_pos[1] + ly
-            for dy in range(-r, r + 1, step):
-                for dx in (-r, r) if r else (0,):
-                    lx, ly = lx0 + dx, ly0 + dy
-                    if 0 <= lx < cloud.width and 0 <= ly < cloud.height and ok(lx) and a.getpixel((lx, ly)) >= threshold:
-                        return cloud_pos[0] + lx, cloud_pos[1] + ly
-    return None                                                # nergens (buiten de uitsluiting) wolk gevonden
-
-def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=50, x_step=4,
-                      y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0),
-                      max_y_radius=None, occupied=(), item_size=0, collision_gap=18):
-    """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte.
-    gap_fracs dwingt eerst een duidelijke afstand tot het midden af (zichtbaar links/rechts),
-    en versoepelt pas als de wolk daar simpelweg geen verf heeft. max_y_radius begrenst hoe ver
-    de zoektocht verticaal mag afdwalen (bijv. tot het eigen vak), zodat een item nooit het vak
-    van zijn buurman binnenloopt. occupied bevat reeds geplaatste aroma's in lokale
-    wolkcoördinaten; kandidaten die daarmee overlappen worden afgewezen."""
-    a = cloud.getchannel("A")
-    radii = [r for r in y_radii if max_y_radius is None or r <= max_y_radius]
-    for gap_frac in gap_fracs:
-        gap = int(cloud.width * gap_frac)
-        for r in radii:
-            for ly in ({ly_target} if r == 0 else {ly_target - r, ly_target + r}):
-                if not (0 <= ly < cloud.height):
-                    continue
-                row = [lx for lx in range(0, cloud.width, x_step) if a.getpixel((lx, ly)) >= threshold]
-                if not row:
-                    continue
-                def ok(c):
-                    if excl and excl[0] < c < excl[1]:
-                        return False
-                    if not ((c < half - gap) if side < 0 else (c > half + gap)):
-                        return False
-                    for ox, oy, osize in occupied:
-                        min_dist = (item_size + osize) / 2 + collision_gap
-                        if abs(c - ox) < min_dist and abs(ly - oy) < min_dist:
-                            return False
-                    return True
-                pref = [c for c in row if ok(c)]
-                if pref:
-                    return (min(pref) if side < 0 else max(pref)), ly
-    return None, ly_target
 
 def _smooth_line(cv, p1, p2, color, width=1.3, curve=0.12, supersample=4):
     """Dun, ANTI-GEALIASED lijntje met een zachte boog (PIL's eigen lijnen zijn niet
@@ -896,36 +835,9 @@ def _draw_labels(cv, placements, rnd):
         d.text((tx, ty), label, font=f, fill=(95, 75, 60, 235))
         last_bottom[side] = ey + th / 2
 
-def _usable_range(cloud, side, half, bottle_top_local, nw, N, cloud_pos, max_half_extent,
-                  threshold=50, y_step=6, x_step=6, margin=24):
-    """Scant de ECHTE wolk-pixels (geen gok) om te bepalen welk verticaal bereik op deze kant
-    bruikbaar is: waar zit verf, mét de flesuitsluiting al verwerkt (conservatief -- geldig voor
-    élk item, klein of groot, in deze run). Basis voor een eerlijke, volledige verdeling."""
-    a = cloud.getchannel("A")
-    xs = range(0, half, x_step) if side < 0 else range(half, cloud.width, x_step)
-    lo = hi = None
-    for ly in range(0, cloud.height, y_step):
-        gy = cloud_pos[1] + ly
-        excl = None
-        if gy + max_half_extent > bottle_top_local:
-            min_off = nw // 2 + max_half_extent + margin
-            excl = (N // 2 - min_off - cloud_pos[0], N // 2 + min_off - cloud_pos[0])
-        for lx in xs:
-            if excl and excl[0] < lx < excl[1]:
-                continue
-            if a.getpixel((lx, ly)) >= threshold:
-                if lo is None:
-                    lo = ly
-                hi = ly
-                break
-    return (lo, hi) if lo is not None else None
-
 def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = kleur_override or _wine_color(bottle)
-    # Een bredere wolk laat ook naast de hals en schouders veilige verfstroken over.
-    # Bij 0.62 was de wolk daar vrijwel even breed als fles + aroma, waardoor het
-    # bruikbare bereik onder de flessentop wegviel en alle smaken bovenin belandden.
     base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.80))
     cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
     bp = _bottle_px()
@@ -938,82 +850,32 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     cv.alpha_composite(cloud, cloud_pos)
     _gold_speckles(cv, cloud, cloud_pos, seed, kleur=kleur)
 
+    # De wolk is decoratie; vaste rijen en veilige kolommen bepalen de compositie.
+    # Daardoor hangt de plaatsing niet meer af van grillige alpha-randen.
     items = _by_type(prim + sec)
-    half = cloud.width // 2
     left_items  = [it for i, it in enumerate(items) if i % 2 == 0]
     right_items = [it for i, it in enumerate(items) if i % 2 == 1]
-    range_half_extent = int(FLAVOR_PX * 0.42 * 0.66) + 12    # milde marge vóór het meten (echte veiligheid zit per item)
+    max_rows = max(len(left_items), len(right_items), 1)
+    top, bottom = int(N * 0.09), int(N * 0.62)
+    slot = (bottom - top) / max_rows
+    size = max(110, min(int(FLAVOR_PX * 0.62), int(slot * 0.72)))
 
-    # per kant het ECHTE bruikbare verticale bereik opmeten (i.p.v. een gegokt top/bottom)
-    ranges = {}
+    # Na rotatie kan een vierkante uitsnede maximaal sqrt(2)/2 * size vanuit
+    # het midden uitsteken. 0.72 rondt dat veilig naar boven af. Samen met 52 px
+    # extra marge blijven ook schaduw en lucht volledig buiten de fles.
+    safe_radius = int(size * 0.72) + 1
+    column_offset = nw // 2 + safe_radius + 52
+    outward_offsets = (0, 30, 12, 42, 20)
+    placements = []                                          # (cx, cy, size, side, naam)
     for side, side_items in ((-1, left_items), (1, right_items)):
-        if not side_items:
-            continue
-        r = _usable_range(cloud, side, half, bottle_top, nw, N, cloud_pos, range_half_extent)
-        ranges[side] = r or (int(cloud.height * 0.06), int(cloud.height * 0.94))  # nooddeksel, komt normaal niet voor
-
-    bottle_top_r, bottle_bottom_r = _bottle_rect(N)
-    placements = []                                          # (cx, cy, size, side, naam) -> labels na de fles tekenen
-    occupied = []                                            # (lokale x, lokale y, grootte) -> aroma's nooit stapelen
-    for side, side_items in ((-1, left_items), (1, right_items)):
-        n_side = len(side_items)
-        if n_side == 0:
-            continue
-        lo, hi = ranges[side]
-        span = max(hi - lo, 1)
-        slot = span / n_side                                  # het ECHTE bruikbare bereik in gelijke delen
         for j, it in enumerate(side_items):
-            size = int(FLAVOR_PX * rnd.uniform(0.45, 0.62))
-            ly_target = int(lo + slot * (j + 0.5))
-            half_extent = int(size * 0.66)
-            excl = None
-            gy_target = cloud_pos[1] + ly_target
-            if gy_target + half_extent > bottle_top:
-                min_off = nw // 2 + half_extent + 24
-                excl = (cloud_cx - min_off - cloud_pos[0], cloud_cx + min_off - cloud_pos[0])
-            lx, ly = _find_cloud_point(cloud, rnd, ly_target, side, half, excl,
-                                       max_y_radius=max(slot * 0.60, 40),
-                                       occupied=occupied, item_size=size)   # 1e voorkeur: blijf binnen het eigen vak
-            if lx is None:
-                lx, ly = _find_cloud_point(cloud, rnd, ly_target, side, half, excl,
-                                           occupied=occupied, item_size=size)  # eigen vak leeg -> verder zoeken
-            if lx is not None:
-                cx, cy = cloud_pos[0] + lx, cloud_pos[1] + ly    # gegarandeerd op de wolk EN weg van de fles
-            else:
-                gok_cx = cloud_cx + side * int(0.20 * cloud.width)
-                found = _nearest_paint(cloud, cloud_pos, cx_guess=gok_cx, cy_guess=cloud_pos[1] + ly_target,
-                                       excl_x=(excl[0] + cloud_pos[0], excl[1] + cloud_pos[0]) if excl else None)
-                if found is None:
-                    found = _nearest_paint(cloud, cloud_pos, cx_guess=gok_cx, cy_guess=cloud_pos[1] + ly_target)
-                cx, cy = found if found else (gok_cx, cloud_pos[1] + ly_target)
-            # lichte correctie: raakt het toch net de fles (zeldzaam, diepste rijen), zoek dan in een
-            # klein venster naar de dichtstbijzijnde plek die zowel veilig als op de wolk is -- lukt dat
-            # niet, dan liever een miniem randoverlapje dan alsnog los komen te zweven
-            he = int(size * 0.66)
-            if bottle_top_r - he < cy < bottle_bottom_r + he:
-                min_off = nw // 2 + he + 24
-                if abs(cx - N // 2) < min_off:
-                    a_ch = cloud.getchannel("A")
-                    gevonden = False
-                    for dy in (0, -20, 20, -45, 45, -75, 75):
-                        for extra in (0, 20, 45, 75, 110):
-                            ncx = N // 2 + side * (min_off + extra)
-                            ncy = cy + dy
-                            nlx, nly = ncx - cloud_pos[0], ncy - cloud_pos[1]
-                            vrij = all(not (abs(nlx - ox) < (size + osize) / 2 + 18 and
-                                           abs(nly - oy) < (size + osize) / 2 + 18)
-                                       for ox, oy, osize in occupied)
-                            if (0 <= nlx < cloud.width and 0 <= nly < cloud.height and
-                                    a_ch.getpixel((nlx, nly)) >= 50 and vrij):
-                                cx, cy = ncx, ncy; gevonden = True; break
-                        if gevonden:
-                            break
-            cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
-            _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
+            cx = N // 2 + side * (column_offset + outward_offsets[j % len(outward_offsets)])
+            jitter = min(10, int(slot * 0.04))
+            cy = int(top + slot * (j + 0.5) + rnd.uniform(-jitter, jitter))
+            _place_cutout(cv, it, cx, cy, size, rnd.uniform(-10, 10),
                           shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
             placements.append((cx, cy, size, side, it["naam"]))
-            occupied.append((cx - cloud_pos[0], cy - cloud_pos[1], size))
-    _paste_bottle(cv, bottle)                                   # fles eerst, labels daarna -> nooit afgesneden
+    _paste_bottle(cv, bottle)
     _draw_labels(cv, placements, rnd)
 
 def _compose_kleurverloop(cv, bottle, prim, sec, seed, kleur_override=None):
