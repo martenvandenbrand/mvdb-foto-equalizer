@@ -58,12 +58,7 @@
         "type": "kruid"
       }
     ],
-    "secundair": [
-      {
-        "naam": "roestvrij staal",
-        "type": "hout"
-      }
-    ]
+    "secundair": []
   },
   "accornero-bricco-del-bosco-vigne-vecchie": {
     "primair": [
@@ -386,12 +381,7 @@
         "type": "fruit"
       }
     ],
-    "secundair": [
-      {
-        "naam": "roestvrij staal",
-        "type": "hout"
-      }
-    ]
+    "secundair": []
   },
   "akrille-cutrera-bastianich-akrille-cerasuolo-di-vittoria-classico-docg": {
     "primair": [
@@ -809,12 +799,7 @@
         "type": "fruit"
       }
     ],
-    "secundair": [
-      {
-        "naam": "roestvrij staal",
-        "type": "hout"
-      }
-    ]
+    "secundair": []
   },
   "biodynamische-rode-wijn-pinot-noir-scene-n-2-2025": {
     "primair": [
@@ -1476,12 +1461,7 @@
         "type": "citrus"
       }
     ],
-    "secundair": [
-      {
-        "naam": "roestvrij staal",
-        "type": "hout"
-      }
-    ]
+    "secundair": []
   },
   "castel-di-salve-lama-del-tenente": {
     "primair": [
@@ -1562,10 +1542,6 @@
       {
         "naam": "zout",
         "type": "kruid"
-      },
-      {
-        "naam": "roestvrij staal",
-        "type": "hout"
       }
     ]
   },
