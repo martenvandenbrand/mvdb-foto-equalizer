@@ -835,10 +835,25 @@ def _draw_labels(cv, placements, rnd):
         d.text((tx, ty), label, font=f, fill=(95, 75, 60, 235))
         last_bottom[side] = ey + th / 2
 
+def _cloud_edge_x(cloud, cloud_pos, cy, side, band, threshold=50):
+    """Buitenrand van de wolk rond één vaste rij; beïnvloedt alleen de x-positie."""
+    alpha = cloud.getchannel("A")
+    local_y = cy - cloud_pos[1]
+    edges = []
+    for y in range(max(0, local_y - band), min(cloud.height, local_y + band + 1), 4):
+        painted = [x for x in range(0, cloud.width, 4) if alpha.getpixel((x, y)) >= threshold]
+        if painted:
+            edges.append(min(painted) if side < 0 else max(painted))
+    if not edges:
+        return cloud_pos[0] + cloud.width // 2
+    edges.sort()
+    q = 0.25 if side < 0 else 0.75                # negeer één extreem, los wolkplukje
+    return cloud_pos[0] + edges[round((len(edges) - 1) * q)]
+
 def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = kleur_override or _wine_color(bottle)
-    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.80))
+    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.90))
     cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
     bp = _bottle_px()
     b = _trim(bottle); bw, bh = b.size
@@ -850,31 +865,39 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     cv.alpha_composite(cloud, cloud_pos)
     _gold_speckles(cv, cloud, cloud_pos, seed, kleur=kleur)
 
-    # De wolk is decoratie; vaste rijen en veilige kolommen bepalen de compositie.
-    # Daardoor hangt de plaatsing niet meer af van grillige alpha-randen.
+    # Eén gezamenlijke reeks vaste rijen: links en rechts wisselen elkaar af en staan
+    # dus nooit op dezelfde hoogte. Alleen de x-positie volgt de nabije wolkrand.
     items = _by_type(prim + sec)
-    left_items  = [it for i, it in enumerate(items) if i % 2 == 0]
-    right_items = [it for i, it in enumerate(items) if i % 2 == 1]
-    max_rows = max(len(left_items), len(right_items), 1)
+    max_rows = max((len(items) + 1) // 2, 1)
     top, bottom = int(N * 0.09), int(N * 0.62)
-    slot = (bottom - top) / max_rows
-    size = max(110, min(int(FLAVOR_PX * 0.62), int(slot * 0.72)))
+    same_side_slot = (bottom - top) / max_rows
+    row_step = (bottom - top) / max(len(items), 1)
+    size = max(110, min(int(FLAVOR_PX * 0.62), int(same_side_slot * 0.72)))
 
     # Na rotatie kan een vierkante uitsnede maximaal sqrt(2)/2 * size vanuit
     # het midden uitsteken. 0.72 rondt dat veilig naar boven af. Samen met 52 px
     # extra marge blijven ook schaduw en lucht volledig buiten de fles.
     safe_radius = int(size * 0.72) + 1
-    column_offset = nw // 2 + safe_radius + 52
-    outward_offsets = (0, 30, 12, 42, 20)
+    bottle_bottom = N - 40
+    bottle_clearance = nw // 2 + safe_radius + 52
+    cloud_overlap = int(size * 0.22)
     placements = []                                          # (cx, cy, size, side, naam)
-    for side, side_items in ((-1, left_items), (1, right_items)):
-        for j, it in enumerate(side_items):
-            cx = N // 2 + side * (column_offset + outward_offsets[j % len(outward_offsets)])
-            jitter = min(10, int(slot * 0.04))
-            cy = int(top + slot * (j + 0.5) + rnd.uniform(-jitter, jitter))
-            _place_cutout(cv, it, cx, cy, size, rnd.uniform(-10, 10),
-                          shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
-            placements.append((cx, cy, size, side, it["naam"]))
+    for i, it in enumerate(items):
+        side = -1 if i % 2 == 0 else 1
+        jitter = min(8, int(row_step * 0.035))
+        cy = int(top + row_step * (i + 0.5) + rnd.uniform(-jitter, jitter))
+        edge_x = _cloud_edge_x(cloud, cloud_pos, cy, side, band=max(24, size // 3))
+        cx = edge_x + side * (size // 2 - cloud_overlap)
+
+        # Alleen als deze rij verticaal naast de fles ligt, geldt de harde horizontale grens.
+        # Boven de fles mag een aroma dichter naar de centrale wolk toe.
+        if cy + safe_radius > bottle_top and cy - safe_radius < bottle_bottom:
+            safe_x = N // 2 + side * bottle_clearance
+            cx = min(cx, safe_x) if side < 0 else max(cx, safe_x)
+
+        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-10, 10),
+                      shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
+        placements.append((cx, cy, size, side, it["naam"]))
     _paste_bottle(cv, bottle)
     _draw_labels(cv, placements, rnd)
 
