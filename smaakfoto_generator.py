@@ -951,14 +951,14 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     half = cloud.width // 2
     left_items  = [it for i, it in enumerate(items) if i % 2 == 0]
     right_items = [it for i, it in enumerate(items) if i % 2 == 1]
-    max_half_extent = int(FLAVOR_PX * 0.62 * 0.66) + 24     # grootste mogelijke marge deze run -> geldig voor elk item
+    range_half_extent = int(FLAVOR_PX * 0.50 * 0.66) + 16    # milde marge vóór het meten (echte veiligheid zit per item)
 
     # per kant het ECHTE bruikbare verticale bereik opmeten (i.p.v. een gegokt top/bottom)
     ranges = {}
     for side, side_items in ((-1, left_items), (1, right_items)):
         if not side_items:
             continue
-        r = _usable_range(cloud, side, half, bottle_top, nw, N, cloud_pos, max_half_extent)
+        r = _usable_range(cloud, side, half, bottle_top, nw, N, cloud_pos, range_half_extent)
         ranges[side] = r or (int(cloud.height * 0.06), int(cloud.height * 0.94))  # nooddeksel, komt normaal niet voor
 
     bottle_top_r, bottle_bottom_r = _bottle_rect(N)
@@ -992,6 +992,18 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
                 if found is None:
                     found = _nearest_paint(cloud, cloud_pos, cx_guess=gok_cx, cy_guess=cloud_pos[1] + ly_target)
                 cx, cy = found if found else (gok_cx, cloud_pos[1] + ly_target)
+            # lichte correctie: raakt het toch net de fles (zeldzaam, diepste rijen), duw dan een klein
+            # stukje weg -- maar alleen als die duw ook echt nog op de wolk landt, anders liever een
+            # miniem randoverlapje dan alsnog los komen te zweven
+            he = int(size * 0.66)
+            if bottle_top_r - he < cy < bottle_bottom_r + he:
+                min_off = nw // 2 + he + 24
+                if abs(cx - N // 2) < min_off:
+                    ncx = N // 2 + side * min_off
+                    nlx, nly = ncx - cloud_pos[0], cy - cloud_pos[1]
+                    if 0 <= nlx < cloud.width and 0 <= nly < cloud.height and \
+                       cloud.getchannel("A").getpixel((nlx, nly)) >= 80:
+                        cx = ncx
             cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
             _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                           shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
