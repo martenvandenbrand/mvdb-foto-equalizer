@@ -24,7 +24,7 @@
   "accornero-bricco-battista": {
     "primair": [
       {
-        "naam": "fruit",
+        "naam": "rood fruit",
         "type": "fruit"
       }
     ],
@@ -46,7 +46,7 @@
   "accornero-bricco-del-bosco-grignolino": {
     "primair": [
       {
-        "naam": "fruit",
+        "naam": "rood fruit",
         "type": "fruit"
       },
       {
@@ -135,7 +135,7 @@
         "type": "fruit"
       },
       {
-        "naam": "fruit",
+        "naam": "rood fruit",
         "type": "fruit"
       }
     ],
@@ -149,7 +149,7 @@
   "accornero-centenario": {
     "primair": [
       {
-        "naam": "fruit",
+        "naam": "zwart fruit",
         "type": "fruit"
       },
       {
@@ -221,7 +221,7 @@
   "accornero-derthona-2023": {
     "primair": [
       {
-        "naam": "bloemen",
+        "naam": "witte bloemen",
         "type": "bloem"
       },
       {
@@ -243,7 +243,7 @@
         "type": "fruit"
       },
       {
-        "naam": "bloemen",
+        "naam": "witte bloemen",
         "type": "bloem"
       },
       {
@@ -273,7 +273,7 @@
         "type": "fruit"
       },
       {
-        "naam": "fruit",
+        "naam": "rood fruit",
         "type": "fruit"
       },
       {
@@ -2754,7 +2754,7 @@
         "type": "fruit"
       },
       {
-        "naam": "fruit",
+        "naam": "rood fruit",
         "type": "fruit"
       },
       {
