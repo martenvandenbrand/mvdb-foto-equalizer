@@ -505,15 +505,22 @@ def _new_canvas():
     fill = (_hex_rgb(BG_COLOR_HEX) + (255,)) if "image-2" in OPENAI_IMAGE_MODEL else (0, 0, 0, 0)
     return Image.new("RGBA", (N, N), fill)
 
-def _place_cutout(cv, it, cx, cy, size, angle, shadow=True, shadow_blur=18, shadow_opacity=90, shadow_offset=(10, 22)):
+def _prepare_cutout(it, size, angle):
     cut = _fit(get_flavor_cutout(it["naam"], it.get("type", "")), size)
     if angle:
         cut = cut.rotate(angle, expand=True, resample=Image.BICUBIC)
+    return cut
+
+def _paste_cutout(cv, cut, cx, cy, shadow=True, shadow_blur=18, shadow_opacity=90, shadow_offset=(10, 22)):
     x, y = cx - cut.width // 2, cy - cut.height // 2
     if shadow:
         sh, pad = _drop_shadow(cut, blur=shadow_blur, opacity=shadow_opacity, offset=shadow_offset)
         cv.alpha_composite(sh, (x - pad, y - pad))
     cv.alpha_composite(cut, (x, y))
+
+def _place_cutout(cv, it, cx, cy, size, angle, shadow=True, shadow_blur=18, shadow_opacity=90, shadow_offset=(10, 22)):
+    cut = _prepare_cutout(it, size, angle)
+    _paste_cutout(cv, cut, cx, cy, shadow, shadow_blur, shadow_opacity, shadow_offset)
 
 def _product_wine_color(p):
     """Wijnkleur uit Shopify's eigen 'wine-variety'-metaveld (betrouwbaar); None als het ontbreekt
@@ -847,7 +854,9 @@ def _cloud_edge_x(cloud, cloud_pos, cy, side, band, threshold=50):
     if not edges:
         return cloud_pos[0] + cloud.width // 2
     edges.sort()
-    q = 0.25 if side < 0 else 0.75                # negeer één extreem, los wolkplukje
+    # Kies de compacte binnenrand in plaats van een dunne, buitenste aquarelpluim.
+    # Links is een hogere x meer naar binnen; rechts juist een lagere x.
+    q = 0.65 if side < 0 else 0.35
     return cloud_pos[0] + edges[round((len(edges) - 1) * q)]
 
 def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
@@ -874,30 +883,29 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     row_step = (bottom - top) / max(len(items), 1)
     size = max(110, min(int(FLAVOR_PX * 0.62), int(same_side_slot * 0.72)))
 
-    # Na rotatie kan een vierkante uitsnede maximaal sqrt(2)/2 * size vanuit
-    # het midden uitsteken. 0.72 rondt dat veilig naar boven af. Samen met 52 px
-    # extra marge blijven ook schaduw en lucht volledig buiten de fles.
-    safe_radius = int(size * 0.72) + 1
     bottle_bottom = N - 40
-    bottle_clearance = nw // 2 + safe_radius + 52
     cloud_overlap = int(size * 0.22)
     placements = []                                          # (cx, cy, size, side, naam)
     for i, it in enumerate(items):
         side = -1 if i % 2 == 0 else 1
         jitter = min(8, int(row_step * 0.035))
         cy = int(top + row_step * (i + 0.5) + rnd.uniform(-jitter, jitter))
-        edge_x = _cloud_edge_x(cloud, cloud_pos, cy, side, band=max(24, size // 3))
-        cx = edge_x + side * (size // 2 - cloud_overlap)
+        angle = rnd.uniform(-10, 10)
+        cut = _prepare_cutout(it, size, angle)
+        half_w = (cut.width + 1) // 2
+        half_h = (cut.height + 1) // 2
+        edge_x = _cloud_edge_x(cloud, cloud_pos, cy, side, band=max(24, half_h))
+        cx = edge_x + side * (half_w - cloud_overlap)
 
-        # Alleen als deze rij verticaal naast de fles ligt, geldt de harde horizontale grens.
-        # Boven de fles mag een aroma dichter naar de centrale wolk toe.
-        if cy + safe_radius > bottle_top and cy - safe_radius < bottle_bottom:
-            safe_x = N // 2 + side * bottle_clearance
+        # Gebruik de echte afmetingen ná schalen en roteren. Een lage, brede uitsnede
+        # zoals perzik wordt zo niet langer behandeld als een onnodig hoge vierkante box.
+        if cy + half_h > bottle_top and cy - half_h < bottle_bottom:
+            safe_x = N // 2 + side * (nw // 2 + half_w + 52)
             cx = min(cx, safe_x) if side < 0 else max(cx, safe_x)
 
-        _place_cutout(cv, it, cx, cy, size, rnd.uniform(-10, 10),
-                      shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
-        placements.append((cx, cy, size, side, it["naam"]))
+        _paste_cutout(cv, cut, cx, cy, shadow=True, shadow_blur=10,
+                      shadow_opacity=45, shadow_offset=(4, 9))
+        placements.append((cx, cy, cut.width, side, it["naam"]))
     _paste_bottle(cv, bottle)
     _draw_labels(cv, placements, rnd)
 
