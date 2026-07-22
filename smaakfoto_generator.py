@@ -935,18 +935,15 @@ def _usable_range(cloud, side, half, bottle_top_local, nw, N, cloud_pos, max_hal
 def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = kleur_override or _wine_color(bottle)
-    bp = _bottle_px()
-    bottle_top = N - 40 - bp
-    top_margin = int(N * 0.03)                                # kleine marge tot de bovenrand van het canvas
-    gap = int(N * 0.02)                                        # kleine marge tussen wolk-bodem en flessenhals
-    avail_height = max(300, bottle_top - top_margin - gap)     # de wolk moet HIER volledig in passen
-    base_cloud = _fit(_style_asset("aromawolk", kleur), avail_height)
+    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
     cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
+    bp = _bottle_px()
     b = _trim(bottle); bw, bh = b.size
     nw = max(1, round(bw * bp / bh))
+    bottle_top = N - 40 - bp
     cloud_cx = N // 2
-    cloud_pos = (cloud_cx - cloud.width // 2, bottle_top - gap - cloud.height)  # bodem (het dichte deel) net boven de hals
-    cloud_cy = cloud_pos[1] + cloud.height // 2
+    cloud_cy = max(cloud.height // 2 + 20, bottle_top - int(cloud.height * 0.44) + int(N * 0.06))
+    cloud_pos = (cloud_cx - cloud.width // 2, cloud_cy - cloud.height // 2)
     cv.alpha_composite(cloud, cloud_pos)
     _gold_speckles(cv, cloud, cloud_pos, seed, kleur=kleur)
 
