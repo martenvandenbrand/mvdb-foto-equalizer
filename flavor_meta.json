@@ -4757,10 +4757,6 @@
       {
         "naam": "eikenhout",
         "type": "hout"
-      },
-      {
-        "naam": "amfora",
-        "type": "hout"
       }
     ]
   },
@@ -4930,10 +4926,6 @@
     "secundair": [
       {
         "naam": "eikenhout",
-        "type": "hout"
-      },
-      {
-        "naam": "amfora",
         "type": "hout"
       },
       {
