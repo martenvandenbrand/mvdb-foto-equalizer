@@ -79,18 +79,6 @@ dezelfde `handle` met `dry_run` uit. Daarna in batches van 10 door de rest.
 - **`COL_MARGIN`** (env, 0.16): hoe ver de kolommen van het midden staan.
 - De cache staat in `flavor_cache/`. Bevalt een specifieke smaak niet? Verwijder dat
   ene bestand (of maak de cache leeg) en draai opnieuw; alleen die wordt opnieuw gemaakt.
-### Fotorealisme: GPT vs. echte foto's
-GPT's beeldmodel neigt voor sommige objecten (room, bloemen, noten) naar een
-gerenderde/CGI-look. De prompt duwt daar hard tegenin, maar wil je gegarandeerd
-fotorealisme, zet dan **`cutout_source: stock`**: dan worden echte foto's van
-Pexels opgehaald en wordt de achtergrond weggeknipt (rembg).
-- Extra (gratis) secret: `PEXELS_API_KEY` (via pexels.com/api).
-- De workflow installeert `rembg` automatisch alleen in stock-modus.
-- Cache is bron-bewust: bestanden heten `naam-gpt.png` of `naam-stock.png`, dus
-  gpt en stock botsen niet en wisselen heeft meteen effect. Bevalt een uitsnede niet,
-  verwijder dat ene bestand en draai opnieuw. Oude bestanden zonder achtervoegsel
-  (van vóór deze wijziging) mag je weggooien.
-
 ### Smaken samenvoegen (goedkoper genereren)
 `synonyms.json` mapt smaakvarianten naar één canonieke smaak, zodat bijna-identieke
 smaken dezelfde uitsnede delen (minder generaties = lagere kosten). Twee secties:

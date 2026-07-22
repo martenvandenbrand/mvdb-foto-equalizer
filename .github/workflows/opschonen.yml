@@ -5,12 +5,6 @@ name: Opschonen
 # dit workflow-bestand zelf ook verwijderen.
 on:
   workflow_dispatch:
-    inputs:
-      source:
-        description: "Welke bron-cutouts behouden (gpt of stock)"
-        type: choice
-        options: ["gpt", "stock"]
-        default: "gpt"
 
 jobs:
   opschonen:
@@ -24,8 +18,6 @@ jobs:
           python-version: "3.12"
 
       - name: Opschonen uitvoeren
-        env:
-          CUTOUT_SOURCE: ${{ inputs.source }}
         run: python opschonen.py
 
       - name: Commit opschoning naar de repo

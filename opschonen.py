@@ -6,19 +6,18 @@ Ruimt de repo veilig op:
   1. Seeden: ontbrekende CANONIEKE cutouts vullen vanuit een bestaande
      gelijkwaardige (zodat er geen beeld verloren gaat).
   2. Cache snoeien: alles in flavor_cache/ weg dat geen canonieke -gpt.png is
-     (stockfoto's, losse bestanden zonder suffix, verweesde pre-synonym namen).
+     (losse bestanden zonder suffix en verweesde pre-synonym namen).
   3. Stale flavor_meta/ map verwijderen (vervangen door flavor_meta.json).
   4. Afgeronde eenmalige acties verwijderen (migreer- + hergebruik-workflow/script).
 
 Gebruikt jouw synonyms.json + flavor_meta.json. Draait veilig meerdere keren.
 """
 
-import json, pathlib, re, shutil, os
+import json, pathlib, re, shutil
 
 CACHE = pathlib.Path("flavor_cache")
 SYN   = json.loads(pathlib.Path("synonyms.json").read_text(encoding="utf-8"))
 META  = json.loads(pathlib.Path("flavor_meta.json").read_text(encoding="utf-8"))
-TAG   = os.environ.get("CUTOUT_SOURCE", "gpt")
 
 def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-") or "smaak"
@@ -47,7 +46,7 @@ def needed_canon():
     return out
 
 def main():
-    suf = f"-{TAG}.png"
+    suf = "-gpt.png"
     needed = needed_canon()
 
     # 1. seeden (hergebruik) — nooit overschrijven

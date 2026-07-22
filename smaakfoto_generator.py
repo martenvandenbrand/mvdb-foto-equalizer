@@ -38,8 +38,6 @@ OPENAI_IMAGE_MODEL = env("OPENAI_IMAGE_MODEL", "gpt-image-1.5")   # of "gpt-imag
 OPENAI_TEXT_MODEL  = env("OPENAI_TEXT_MODEL", "gpt-4o-mini")
 IMAGE_QUALITY      = env("IMAGE_QUALITY", "high")                 # low | medium | high
 
-CUTOUT_SOURCE  = env("CUTOUT_SOURCE", "gpt")     # gpt = genereren | stock = echte foto's (Pexels) + achtergrond weg
-PEXELS_API_KEY = env("PEXELS_API_KEY", "")       # alleen nodig bij CUTOUT_SOURCE=stock
 BYPASS_CACHE   = env_bool("BYPASS_CACHE", False)  # True = cache negeren en verse uitsnede maken (ook bij gpt)
 BG_COLOR_HEX   = env("BG_COLOR_HEX", "#EFF0F5")    # achtergrondkleur voor modellen zonder transparant (gpt-image-2), wordt weer weggeknipt
 SYN_FILE       = pathlib.Path("synonyms.json")    # variant -> canonieke smaak (bespaart generaties)
@@ -367,13 +365,13 @@ def _slug(s):
 _fresh = set()   # smaken die deze run al opnieuw zijn gemaakt (voorkomt dubbel werk bij BYPASS_CACHE)
 
 def get_flavor_cutout(naam, typ):
-    """Transparante uitsnede per smaak; gecachet per naam+bron. Bron: GPT of echte stockfoto."""
+    """Transparante GPT-uitsnede per smaak, met cache."""
     CACHE_DIR.mkdir(exist_ok=True)
-    key = f"{_slug(naam)}-{CUTOUT_SOURCE}"
+    key = f"{_slug(naam)}-gpt"
     fp = CACHE_DIR / f"{key}.png"
     if fp.exists() and (not BYPASS_CACHE or key in _fresh):
         return Image.open(fp).convert("RGBA")
-    img = _stock_cutout(naam) if CUTOUT_SOURCE == "stock" else _gpt_cutout(naam, typ)
+    img = _gpt_cutout(naam, typ)
     img.save(fp); _fresh.add(key)
     return img
 
@@ -426,27 +424,6 @@ def _remove_solid_bg(im, bg, tol=45):
         amask = amask.filter(ImageFilter.MinFilter(3))    # trim 1px achtergrondrand
         im.putalpha(amask)
         return im
-
-def _stock_cutout(naam):
-    """Echte foto van Pexels ophalen en de achtergrond wegknippen (rembg) -> transparant."""
-    if not PEXELS_API_KEY:
-        raise RuntimeError("CUTOUT_SOURCE=stock vereist PEXELS_API_KEY (gratis via pexels.com/api).")
-    r = requests.get("https://api.pexels.com/v1/search",
-        headers={"Authorization": PEXELS_API_KEY},
-        params={"query": f"{naam} isolated on white background", "per_page": 1,
-                "orientation": "square"}, timeout=30)
-    r.raise_for_status()
-    photos = r.json().get("photos", [])
-    if not photos:
-        raise RuntimeError(f"geen stockfoto gevonden voor '{naam}'")
-    src = photos[0]["src"]
-    raw = requests.get(src.get("large2x") or src.get("large") or src["original"], timeout=30).content
-    try:
-        from rembg import remove
-    except ImportError:
-        raise RuntimeError("CUTOUT_SOURCE=stock vereist rembg (pip install rembg onnxruntime).")
-    return remove(Image.open(io.BytesIO(raw)).convert("RGBA")).convert("RGBA")
-
 
 # ------------------------- Compositie -------------------------
 def _trim(im):
@@ -603,11 +580,14 @@ PALETTES = {
     "rose": "zachtroze, framboos, perzik en licht goud",
 }
 
+_fresh_assets = set()
+
 def _style_asset(style, kleur):
     """Herbruikbare sfeer-asset (wolk/linten/rook) per stijl+wijnkleur; 1x genereren, daarna cache."""
     CACHE_DIR.mkdir(exist_ok=True)
     fp = CACHE_DIR / f"asset-{style}-{kleur}-gpt.png"
-    if fp.exists() and not BYPASS_CACHE:
+    key = (style, kleur)
+    if fp.exists() and (not BYPASS_CACHE or key in _fresh_assets):
         return Image.open(fp).convert("RGBA")
     prompt = (ASSET_PROMPTS[style].format(palet=PALETTES[kleur]) +
               " Op een VOLLEDIG TRANSPARANTE achtergrond, niets anders in beeld: geen fles, geen tekst, "
@@ -627,6 +607,7 @@ def _style_asset(style, kleur):
     if "image-2" in OPENAI_IMAGE_MODEL:
         img = _remove_solid_bg(img, _hex_rgb(BG_COLOR_HEX))
     img.save(fp)
+    _fresh_assets.add(key)
     return img
 
 def _font(size, variant=""):
@@ -1144,11 +1125,11 @@ def preflight():
 
     products = select_products()
     meta = _load_meta()
-    nieuwe_extracties = [p["handle"] for p in products if p["handle"] not in meta]
+    nieuwe_extracties = [p["handle"] for p in products if BYPASS_CACHE or p["handle"] not in meta]
 
     nodige_smaken = {}                                          # canonieke naam -> voorbeeld-item (voor het type)
     for p in products:
-        if p["handle"] in meta:
+        if p["handle"] in meta and not BYPASS_CACHE:
             e = meta[p["handle"]]
             prim, sec = e.get("primair", []), e.get("secundair", [])
         else:
@@ -1157,18 +1138,38 @@ def preflight():
         for it in prim + sec:
             nodige_smaken.setdefault(it["naam"], it)
 
-    suf = f"-{CUTOUT_SOURCE}.png"
-    ontbrekende_cutouts = [naam for naam in nodige_smaken if not (CACHE_DIR / f"{_slug(naam)}{suf}").exists()]
+    ontbrekende_cutouts = [naam for naam in nodige_smaken
+                           if BYPASS_CACHE or not (CACHE_DIR / f"{_slug(naam)}-gpt.png").exists()]
+
+    # Bij nog te extraheren beschrijvingen zijn de smaaknamen pas na de tekst-call bekend.
+    # Het extractiecontract staat maximaal 5 primaire + 5 secundaire smaken toe. Reken daarom
+    # conservatief met 10 nieuwe beelden per onbekend product, zodat de raming nooit doet alsof
+    # deze toekomstige beeld-calls gratis zijn. Eventuele overlap maakt de werkelijke kosten lager.
+    onbekende_smaakbeelden = 10 * len(nieuwe_extracties)
+
+    # De drie sfeerstijlen gebruiken een GPT-asset per wijnkleur. Voor een ontbrekende/ongekende
+    # Shopify-wijnkleur tellen we alle drie mogelijke kleuren mee; dat is bewust een bovengrens.
+    ontbrekende_assets = []
+    if AROMA_STYLE in ASSET_PROMPTS:
+        kleuren = set()
+        for p in products:
+            kleur = _product_wine_color(p)
+            kleuren.update([kleur] if kleur else PALETTES.keys())
+        for kleur in sorted(kleuren):
+            fp = CACHE_DIR / f"asset-{AROMA_STYLE}-{kleur}-gpt.png"
+            if BYPASS_CACHE or not fp.exists():
+                ontbrekende_assets.append(kleur)
 
     per_extractie = 2000 * TXT_IN_RATE + 150 * TXT_OUT_RATE     # ruwe schatting per beschrijving
     per_beeld = _estimate_image_cost(OPENAI_IMAGE_MODEL, IMAGE_QUALITY)
     kosten_extractie = len(nieuwe_extracties) * per_extractie
-    kosten_beelden = len(ontbrekende_cutouts) * per_beeld
+    aantal_beelden = len(ontbrekende_cutouts) + onbekende_smaakbeelden + len(ontbrekende_assets)
+    kosten_beelden = aantal_beelden * per_beeld
     totaal = kosten_extractie + kosten_beelden
 
     print(f"== VOORCALCULATIE | {len(products)} fles(sen) geselecteerd | stijl {AROMA_STYLE} | "
           f"model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) ==\n")
-    if not nieuwe_extracties and not ontbrekende_cutouts:
+    if not nieuwe_extracties and not ontbrekende_cutouts and not ontbrekende_assets:
         print("Geen enkele OpenAI-call nodig -- alles komt uit de cache. Veilig om direct te genereren.")
         return
     print("Er zijn OpenAI-calls nodig om deze run te voltooien:\n")
@@ -1180,6 +1181,13 @@ def preflight():
         print(f"\n  - {len(ontbrekende_cutouts)}x nieuwe smaakafbeelding ({OPENAI_IMAGE_MODEL}, {IMAGE_QUALITY})")
         print(f"    Waarom: deze smaken staan nog niet als uitsnede in flavor_cache/:")
         print(f"    {', '.join(sorted(ontbrekende_cutouts)[:15])}" + (" ..." if len(ontbrekende_cutouts) > 15 else ""))
+    if onbekende_smaakbeelden:
+        print(f"\n  - maximaal {onbekende_smaakbeelden}x nog onbekende smaakafbeelding "
+              f"({OPENAI_IMAGE_MODEL}, {IMAGE_QUALITY})")
+        print("    Waarom: nieuwe extracties kunnen per wijn maximaal 10 nog niet gecachete smaken opleveren.")
+    if ontbrekende_assets:
+        print(f"\n  - {len(ontbrekende_assets)}x ontbrekende sfeer-asset voor stijl '{AROMA_STYLE}'")
+        print(f"    Wijnkleur(en): {', '.join(ontbrekende_assets)}")
     print(f"\nGeschatte totale kosten: ~${totaal:.2f} "
           f"(extractie ~${kosten_extractie:.2f} + beelden ~${kosten_beelden:.2f})")
     print("\nGeef toestemming door de volgende job ('genereren') goed te keuren in de Actions-run "

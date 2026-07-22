@@ -78,6 +78,8 @@ jobs:
           IMAGE_QUALITY: ${{ inputs.image_quality }}
           AROMA_STYLE: ${{ inputs.aroma_stijl }}
           OVERWRITE: ${{ inputs.overwrite }}
+          MERGE_COLOR_VARIANTS: ${{ inputs.merge_colors }}
+          BYPASS_CACHE: ${{ inputs.bypass_cache }}
         run: python smaakfoto_generator.py
 
   genereren:
@@ -98,7 +100,7 @@ jobs:
       - name: Installeer dependencies
         run: pip install -r requirements.txt
 
-      # Nodig voor stock-modus én voor gpt-image-2 (achtergrond wegknippen)
+      # Nodig voor gpt-image-2 (achtergrond wegknippen)
       - name: Installeer rembg
         if: ${{ inputs.image_model == 'gpt-image-2' }}
         run: pip install rembg onnxruntime
@@ -120,7 +122,6 @@ jobs:
           MERGE_COLOR_VARIANTS: ${{ inputs.merge_colors }}
           AROMA_STYLE: ${{ inputs.aroma_stijl }}
           OVERWRITE: ${{ inputs.overwrite }}
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           BYPASS_CACHE: ${{ inputs.bypass_cache }}
         run: python smaakfoto_generator.py
 
