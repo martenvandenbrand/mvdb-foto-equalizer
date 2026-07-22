@@ -60,6 +60,7 @@ COL_MARGIN     = float(env("COL_MARGIN", "0.16"))# kolomcenter t.o.v. canvasbree
 BATCH_SIZE     = env("BATCH_SIZE", "1")         # "1"|"10"|"25"|"50"|"100"|"alle"
 HANDLE         = env("HANDLE", "")
 WIJNHUIS       = env("WIJNHUIS", "")            # producentnaam (deelstring, hoofdletterongevoelig); overstemt BATCH_SIZE
+AROMA_FILTER   = env("AROMA_FILTER", "")         # genereer alle producten opnieuw die dit aroma in flavor_meta.json hebben
 DONE_TAG       = env("DONE_TAG", "smaakfoto")
 OVERWRITE      = env_bool("OVERWRITE", False)   # True = selecteer producten MET de tag en vervang hun smaakfoto
 AROMA_STYLE    = env("AROMA_STYLE", "kolommen") # kolommen|krans|explosie|geometrisch|aromawolk|kleurverloop|rook
@@ -183,6 +184,27 @@ def select_products():
             print(f"[info] {len(alle_van_producent)} wijn(en) gevonden voor '{WIJNHUIS}', maar allemaal al "
                   f"verwerkt ({klaar}/{len(alle_van_producent)} hebben de tag '{DONE_TAG}'). "
                   f"Zet 'overwrite' aan om ze opnieuw te genereren.")
+    elif AROMA_FILTER.strip():
+        needle = _canonical(AROMA_FILTER)
+        if not needle:
+            print(f"[info] Aroma '{AROMA_FILTER}' vervalt volgens synonyms.json en kan niet als filter dienen.")
+            nodes = []
+        else:
+            meta = _load_meta()
+            alle_producten = _select_all(None)
+            nodes = []
+            zonder_meta = 0
+            for p in alle_producten:
+                entry = meta.get(p["handle"])
+                if not entry:
+                    zonder_meta += 1
+                    continue
+                prim, sec = _prep_flavors(entry.get("primair", []), entry.get("secundair", []))
+                if needle in {it["naam"] for it in prim + sec}:
+                    nodes.append(p)
+            print(f"[info] Aromafilter '{AROMA_FILTER}' -> '{needle}': {len(nodes)} product(en) gevonden. "
+                  f"Deze worden opnieuw gegenereerd, ongeacht tag of batch_size. "
+                  f"Producten zonder smaakmetadata: {zonder_meta}.")
     else:
         q = f"tag:{DONE_TAG}" if OVERWRITE else f"-tag:{DONE_TAG}"    # vervang bestaande / alleen nog-niet-verwerkte
         if BATCH_SIZE.strip().lower() == "alle":
@@ -1174,7 +1196,7 @@ def main():
     products = select_products()
     print(f"== {'DRY-RUN' if DRY_RUN else 'LIVE'} | stijl {AROMA_STYLE} | model {OPENAI_IMAGE_MODEL} ({IMAGE_QUALITY}) "
           f"| fles {_bottle_px()}px op {FINAL_SIZE} | overwrite: {OVERWRITE} "
-          f"| wijnhuis: {WIJNHUIS or '-'} | {len(products)} fles(sen) ==\n")
+          f"| wijnhuis: {WIJNHUIS or '-'} | aroma: {AROMA_FILTER or '-'} | {len(products)} fles(sen) ==\n")
     if DRY_RUN:
         print("Let op: DRY-RUN genereert nieuwe smaken (OpenAI-kosten, maar gecacht), upload/tagt niet.\n")
 

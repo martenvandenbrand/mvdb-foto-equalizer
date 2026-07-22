@@ -16,6 +16,10 @@ on:
         description: "Alle wijnen van 1 wijnhuis (deelstring van de producentnaam, bv. 'Marqués de Murrieta'). Overstemt batch_size"
         type: string
         default: ""
+      aroma:
+        description: "Alle smaakfoto's met dit aroma opnieuw genereren (bv. perzik). Overstemt batch_size en tagfilter"
+        type: string
+        default: ""
       aroma_stijl:
         description: "Stijl van de smaakfoto"
         type: choice
@@ -74,6 +78,7 @@ jobs:
           BATCH_SIZE: ${{ inputs.batch_size }}
           HANDLE: ${{ inputs.handle }}
           WIJNHUIS: ${{ inputs.wijnhuis }}
+          AROMA_FILTER: ${{ inputs.aroma }}
           OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
           IMAGE_QUALITY: ${{ inputs.image_quality }}
           AROMA_STYLE: ${{ inputs.aroma_stijl }}
@@ -115,6 +120,7 @@ jobs:
           BATCH_SIZE: ${{ inputs.batch_size }}
           HANDLE: ${{ inputs.handle }}
           WIJNHUIS: ${{ inputs.wijnhuis }}
+          AROMA_FILTER: ${{ inputs.aroma }}
           DRY_RUN: ${{ inputs.dry_run }}
           OPENAI_IMAGE_MODEL: ${{ inputs.image_model }}
           IMAGE_QUALITY: ${{ inputs.image_quality }}

@@ -126,6 +126,14 @@ alle wijnen van die producent, ongeacht `batch_size`. Zoekt in het `custom.wijnh
 metaveld, hoofdletterongevoelig en op deelstring — `murrieta` vindt dus ook
 "Marqués de Murrieta". Leeg laten = normaal gedrag via `batch_size`.
 
+### Alle smaakfoto's met één aroma opnieuw genereren
+Vul `aroma` in met bijvoorbeeld `perzik`, `brioche` of `zwarte peper`. Het script
+doorzoekt `flavor_meta.json`, past eerst de regels uit `synonyms.json` toe en selecteert
+vervolgens alle producten met dat canonieke aroma. Deze selectie negeert `batch_size`,
+de tag `smaakfoto` en de instelling `overwrite`: de bestaande smaakfoto wordt altijd pas
+verwijderd nadat de nieuwe is geplaatst. Producten zonder smaakmetadata worden overgeslagen.
+Een ingevulde `handle` heeft voorrang op `wijnhuis`; `wijnhuis` heeft voorrang op `aroma`.
+
 ### Toestemming vóór elke OpenAI-uitgave
 De workflow bestaat nu uit twee jobs:
 
