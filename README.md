@@ -96,9 +96,12 @@ Kies in de workflow met `aroma_stijl` uit zeven layouts:
 - **kolommen** (huidig), **krans**, **explosie**, **geometrisch** — hergebruiken de
   bestaande smaak-cutouts of tekenen alles in Pillow: **0 extra OpenAI-calls**.
 - **aromawolk**, **kleurverloop**, **rook** — gebruiken één herbruikbare sfeer-asset
-  per wijnkleur (rood/wit/rosé, automatisch gedetecteerd uit de flesfoto). Max 3
-  eenmalige generaties per stijl; daarna alles uit cache. Legenda's (stippen +
-  smaaknamen) tekent Pillow gratis.
+  per combinatie van wijnkleur en het Shopify-productmetaveld `custom.smaakstijl`.
+  Bijvoorbeeld `fris`, `fruitig`, `mineraal`, `romig`, `vol`, `krachtig`, `elegant`,
+  `complex`, `kruidig` of `zacht`. De vorm van de rook/wolk wordt daarop aangepast.
+  Producten zonder smaakstijl blijven de bestaande standaardasset gebruiken. Iedere
+  combinatie wordt één keer gegenereerd en daarna uit `flavor_cache/` hergebruikt.
+  De voorcalculatie toont vooraf precies welke nieuwe combinaties geld kosten.
 - **`overwrite`**: selecteert producten MET de tag en vervangt hun bestaande
   smaakfoto (herkend aan alt-tekst "Wat je proeft") — de oude wordt pas verwijderd
   nadat de nieuwe staat. Zo vervang je de hele catalogus veilig van stijl.

@@ -128,6 +128,9 @@ query($n: Int!, $q: String, $cursor: String) {
       wijnhuis: metafield(namespace: "custom", key: "wijnhuis_new") {
         reference { ... on Metaobject { field(key: "bibi_graetz") { value } } }
       }
+      smaakstijl: metafield(namespace: "custom", key: "smaakstijl") {
+        value jsonValue
+      }
       media(first: 20) { nodes { ... on MediaImage { id alt } } }
     }
   }
@@ -540,6 +543,24 @@ def _product_wine_color(p):
         "versterkt": "rood", "fortified": "rood",
     }.get(label)
 
+def _product_smaakstijl(p):
+    """Lees custom.smaakstijl als tekst of tekstlijst; leeg betekent de bestaande standaardrook."""
+    mf = p.get("smaakstijl") or {}
+    raw = mf.get("jsonValue")
+    if raw is None:
+        raw = mf.get("value")
+    if isinstance(raw, list):
+        raw = " / ".join(str(v) for v in raw if v)
+    elif isinstance(raw, dict):
+        raw = " / ".join(str(v) for v in raw.values() if v)
+    elif isinstance(raw, str) and raw.lstrip().startswith("["):
+        try:
+            values = json.loads(raw)
+            raw = " / ".join(str(v) for v in values if v)
+        except Exception:
+            pass
+    return re.sub(r"\s+", " ", str(raw or "")).strip()[:100]
+
 def _wine_color(bottle_img):
     """rood/wit/rose, bepaald door de GLADSTE band te kiezen (laagste lokale variantie).
     Een bedrukt etiket (tekst/randen/logo's) heeft veel lokale variatie; het wijnglas zelf
@@ -587,16 +608,45 @@ PALETTES = {
     "rose": "zachtroze, framboos, perzik en licht goud",
 }
 
+SMAAKSTIJL_VISUALS = {
+    "fris": "licht, helder en opwaarts, met veel lucht tussen de fijne slierten",
+    "fruit": "rond, sappig en speels, met zachte volle bewegingen",
+    "mineraal": "strak en verfijnd, met dunne steenachtige nerven en veel transparantie",
+    "romig": "zacht, breed en fluweelachtig, met vloeiende afgeronde lagen",
+    "vol": "rijk, breed en gelaagd, met meer volume onderin",
+    "kracht": "krachtig en dramatisch, met uitgesproken kronkels en duidelijk contrast",
+    "elegant": "slank, rustig en sierlijk, met lange verfijnde lijnen",
+    "complex": "gelaagd en verweven, met meerdere subtiele richtingen en diepte",
+    "kruid": "levendig en iets hoekiger, met fijne energieke vertakkingen",
+    "zacht": "rond, kalm en diffuus, zonder scherpe overgangen",
+}
+
+def _smaakstijl_visual(smaakstijl):
+    s = (smaakstijl or "").strip().lower()
+    if not s:
+        return ""
+    traits = []
+    for keyword, visual in SMAAKSTIJL_VISUALS.items():
+        if keyword in s and visual not in traits:
+            traits.append(visual)
+    if not traits:
+        traits.append(f"visueel passend bij de wijnstijl '{smaakstijl}'")
+    return " De vormtaal is " + "; en ".join(traits[:3]) + "."
+
+def _style_asset_path(style, kleur, smaakstijl=""):
+    suffix = f"-{_slug(smaakstijl)[:48]}" if smaakstijl else ""
+    return CACHE_DIR / f"asset-{style}-{kleur}{suffix}-gpt.png"
+
 _fresh_assets = set()
 
-def _style_asset(style, kleur):
-    """Herbruikbare sfeer-asset (wolk/linten/rook) per stijl+wijnkleur; 1x genereren, daarna cache."""
+def _style_asset(style, kleur, smaakstijl=""):
+    """Herbruikbare sfeer-asset per stijl, wijnkleur en optionele smaakstijl."""
     CACHE_DIR.mkdir(exist_ok=True)
-    fp = CACHE_DIR / f"asset-{style}-{kleur}-gpt.png"
-    key = (style, kleur)
+    fp = _style_asset_path(style, kleur, smaakstijl)
+    key = (style, kleur, smaakstijl.lower())
     if fp.exists() and (not BYPASS_CACHE or key in _fresh_assets):
         return Image.open(fp).convert("RGBA")
-    prompt = (ASSET_PROMPTS[style].format(palet=PALETTES[kleur]) +
+    prompt = (ASSET_PROMPTS[style].format(palet=PALETTES[kleur]) + _smaakstijl_visual(smaakstijl) +
               " Op een VOLLEDIG TRANSPARANTE achtergrond, niets anders in beeld: geen fles, geen tekst, "
               "geen objecten, geen ondergrond.")
     body = {"model": OPENAI_IMAGE_MODEL, "prompt": prompt, "size": "1024x1536",
@@ -859,10 +909,10 @@ def _cloud_edge_x(cloud, cloud_pos, cy, side, band, threshold=50):
     q = 0.65 if side < 0 else 0.35
     return cloud_pos[0] + edges[round((len(edges) - 1) * q)]
 
-def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
+def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None, smaakstijl=""):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = kleur_override or _wine_color(bottle)
-    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.90))
+    base_cloud = _fit(_style_asset("aromawolk", kleur, smaakstijl), int(N * 0.90))
     cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
     bp = _bottle_px()
     b = _trim(bottle); bw, bh = b.size
@@ -909,10 +959,10 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     _paste_bottle(cv, bottle)
     _draw_labels(cv, placements, rnd)
 
-def _compose_kleurverloop(cv, bottle, prim, sec, seed, kleur_override=None):
+def _compose_kleurverloop(cv, bottle, prim, sec, seed, kleur_override=None, smaakstijl=""):
     N = cv.size[0]
     kleur = kleur_override or _wine_color(bottle)
-    ribbons = _fit(_style_asset("kleurverloop", kleur), int(N * 0.66))
+    ribbons = _fit(_style_asset("kleurverloop", kleur, smaakstijl), int(N * 0.66))
     bp = _bottle_px()
     cx = int(N * 0.40)                                       # fles + linten iets naar links, legenda rechts
     cv.alpha_composite(ribbons, (cx - ribbons.width // 2, max(10, N - 40 - bp - ribbons.height + int(bp*0.12))))
@@ -921,10 +971,10 @@ def _compose_kleurverloop(cv, bottle, prim, sec, seed, kleur_override=None):
     nw = max(1, round(w * bp / h)); b = b.resize((nw, bp), Image.LANCZOS)
     cv.alpha_composite(b, (cx - nw // 2, N - bp - 40))
 
-def _compose_rook(cv, bottle, prim, sec, seed, kleur_override=None):
+def _compose_rook(cv, bottle, prim, sec, seed, kleur_override=None, smaakstijl=""):
     N = cv.size[0]
     kleur = kleur_override or _wine_color(bottle)
-    smoke = _fit(_style_asset("rook", kleur), int(N * 0.60))
+    smoke = _fit(_style_asset("rook", kleur, smaakstijl), int(N * 0.60))
     bp = _bottle_px()
     cx = int(N * 0.38)
     cv.alpha_composite(smoke, (cx - smoke.width // 3, max(10, N - 40 - bp - smoke.height + int(bp*0.10))))
@@ -1011,9 +1061,13 @@ def _compose_constellatie(cv, bottle, prim, sec, seed, kleur_override=None):
 
 _COMPOSERS["constellatie"] = _compose_constellatie
 
-def compose(bottle_img, prim, sec, seed=0, kleur_override=None):
+def compose(bottle_img, prim, sec, seed=0, kleur_override=None, smaakstijl=""):
     cv = _new_canvas()
-    _COMPOSERS.get(AROMA_STYLE, _compose_kolommen)(cv, bottle_img, prim, sec, seed, kleur_override)
+    composer = _COMPOSERS.get(AROMA_STYLE, _compose_kolommen)
+    if AROMA_STYLE in ASSET_PROMPTS:
+        composer(cv, bottle_img, prim, sec, seed, kleur_override, smaakstijl)
+    else:
+        composer(cv, bottle_img, prim, sec, seed, kleur_override)
     return cv
 
 
@@ -1058,18 +1112,20 @@ def preflight():
     # deze toekomstige beeld-calls gratis zijn. Eventuele overlap maakt de werkelijke kosten lager.
     onbekende_smaakbeelden = 10 * len(nieuwe_extracties)
 
-    # De drie sfeerstijlen gebruiken een GPT-asset per wijnkleur. Voor een ontbrekende/ongekende
-    # Shopify-wijnkleur tellen we alle drie mogelijke kleuren mee; dat is bewust een bovengrens.
+    # De drie sfeerstijlen gebruiken één GPT-asset per combinatie van wijnkleur en smaakstijl.
+    # Voor een onbekende wijnkleur tellen we alle drie paletten mee: bewust een bovengrens.
     ontbrekende_assets = []
     if AROMA_STYLE in ASSET_PROMPTS:
-        kleuren = set()
+        asset_specs = set()
         for p in products:
             kleur = _product_wine_color(p)
-            kleuren.update([kleur] if kleur else PALETTES.keys())
-        for kleur in sorted(kleuren):
-            fp = CACHE_DIR / f"asset-{AROMA_STYLE}-{kleur}-gpt.png"
+            smaakstijl = _product_smaakstijl(p)
+            for k in ([kleur] if kleur else PALETTES.keys()):
+                asset_specs.add((k, smaakstijl))
+        for kleur, smaakstijl in sorted(asset_specs):
+            fp = _style_asset_path(AROMA_STYLE, kleur, smaakstijl)
             if BYPASS_CACHE or not fp.exists():
-                ontbrekende_assets.append(kleur)
+                ontbrekende_assets.append((kleur, smaakstijl))
 
     per_extractie = 2000 * TXT_IN_RATE + 150 * TXT_OUT_RATE     # ruwe schatting per beschrijving
     per_beeld = _estimate_image_cost(OPENAI_IMAGE_MODEL, IMAGE_QUALITY)
@@ -1098,7 +1154,8 @@ def preflight():
         print("    Waarom: nieuwe extracties kunnen per wijn maximaal 10 nog niet gecachete smaken opleveren.")
     if ontbrekende_assets:
         print(f"\n  - {len(ontbrekende_assets)}x ontbrekende sfeer-asset voor stijl '{AROMA_STYLE}'")
-        print(f"    Wijnkleur(en): {', '.join(ontbrekende_assets)}")
+        specs = [f"{kleur} / {smaakstijl or 'standaard'}" for kleur, smaakstijl in ontbrekende_assets]
+        print(f"    Combinatie(s): {', '.join(specs)}")
     print(f"\nGeschatte totale kosten: ~${totaal:.2f} "
           f"(extractie ~${kosten_extractie:.2f} + beelden ~${kosten_beelden:.2f})")
     print("\nGeef toestemming door de volgende job ('genereren') goed te keuren in de Actions-run "
@@ -1134,13 +1191,15 @@ def main():
             prim, sec = _balance(prim, sec)
             raw = requests.get(p["featuredImage"]["url"], timeout=30).content
             kleur_override = _product_wine_color(p)          # betrouwbaar Shopify-veld; None = val terug op pixels
+            smaakstijl = _product_smaakstijl(p)
             final = compose(Image.open(io.BytesIO(raw)), prim, sec,
-                            seed=zlib.crc32(p["handle"].encode()), kleur_override=kleur_override)
+                            seed=zlib.crc32(p["handle"].encode()), kleur_override=kleur_override,
+                            smaakstijl=smaakstijl)
             final.save(BACKUP_DIR / f"{p['handle']}-smaak.png", "PNG", optimize=True)
             names = lambda xs: ", ".join(x["naam"] for x in xs) or "-"
             dt = time.time() - t0
             print(f"[{i}/{n_total}] [{'dry' if DRY_RUN else 'ok'}] {p['handle']}  ({dt:.1f}s)  "
-                  f"| links: {names(prim)}  | rechts: {names(sec)}")
+                  f"| smaakstijl: {smaakstijl or 'standaard'} | links: {names(prim)}  | rechts: {names(sec)}")
             if not DRY_RUN:
                 buf = io.BytesIO(); final.save(buf, "PNG", optimize=True)
                 upload_and_attach(p["id"], buf.getvalue(), p["handle"], old_ids=old_smaak_media_ids(p))
