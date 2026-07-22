@@ -808,12 +808,13 @@ def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=50, step=10, 
 
 def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=50, x_step=4,
                       y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0),
-                      max_y_radius=None):
+                      max_y_radius=None, occupied=(), item_size=0, collision_gap=18):
     """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte.
     gap_fracs dwingt eerst een duidelijke afstand tot het midden af (zichtbaar links/rechts),
     en versoepelt pas als de wolk daar simpelweg geen verf heeft. max_y_radius begrenst hoe ver
     de zoektocht verticaal mag afdwalen (bijv. tot het eigen vak), zodat een item nooit het vak
-    van zijn buurman binnenloopt."""
+    van zijn buurman binnenloopt. occupied bevat reeds geplaatste aroma's in lokale
+    wolkcoördinaten; kandidaten die daarmee overlappen worden afgewezen."""
     a = cloud.getchannel("A")
     radii = [r for r in y_radii if max_y_radius is None or r <= max_y_radius]
     for gap_frac in gap_fracs:
@@ -828,7 +829,13 @@ def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=50, x_s
                 def ok(c):
                     if excl and excl[0] < c < excl[1]:
                         return False
-                    return (c < half - gap) if side < 0 else (c > half + gap)
+                    if not ((c < half - gap) if side < 0 else (c > half + gap)):
+                        return False
+                    for ox, oy, osize in occupied:
+                        min_dist = (item_size + osize) / 2 + collision_gap
+                        if abs(c - ox) < min_dist and abs(ly - oy) < min_dist:
+                            return False
+                    return True
                 pref = [c for c in row if ok(c)]
                 if pref:
                     return (min(pref) if side < 0 else max(pref)), ly
@@ -947,6 +954,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
 
     bottle_top_r, bottle_bottom_r = _bottle_rect(N)
     placements = []                                          # (cx, cy, size, side, naam) -> labels na de fles tekenen
+    occupied = []                                            # (lokale x, lokale y, grootte) -> aroma's nooit stapelen
     for side, side_items in ((-1, left_items), (1, right_items)):
         n_side = len(side_items)
         if n_side == 0:
@@ -964,9 +972,11 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
                 min_off = nw // 2 + half_extent + 24
                 excl = (cloud_cx - min_off - cloud_pos[0], cloud_cx + min_off - cloud_pos[0])
             lx, ly = _find_cloud_point(cloud, rnd, ly_target, side, half, excl,
-                                       max_y_radius=max(slot * 0.60, 40))   # 1e voorkeur: blijf binnen het eigen vak
+                                       max_y_radius=max(slot * 0.60, 40),
+                                       occupied=occupied, item_size=size)   # 1e voorkeur: blijf binnen het eigen vak
             if lx is None:
-                lx, ly = _find_cloud_point(cloud, rnd, ly_target, side, half, excl)  # eigen vak leeg -> verder zoeken
+                lx, ly = _find_cloud_point(cloud, rnd, ly_target, side, half, excl,
+                                           occupied=occupied, item_size=size)  # eigen vak leeg -> verder zoeken
             if lx is not None:
                 cx, cy = cloud_pos[0] + lx, cloud_pos[1] + ly    # gegarandeerd op de wolk EN weg van de fles
             else:
@@ -990,7 +1000,11 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
                             ncx = N // 2 + side * (min_off + extra)
                             ncy = cy + dy
                             nlx, nly = ncx - cloud_pos[0], ncy - cloud_pos[1]
-                            if 0 <= nlx < cloud.width and 0 <= nly < cloud.height and a_ch.getpixel((nlx, nly)) >= 50:
+                            vrij = all(not (abs(nlx - ox) < (size + osize) / 2 + 18 and
+                                           abs(nly - oy) < (size + osize) / 2 + 18)
+                                       for ox, oy, osize in occupied)
+                            if (0 <= nlx < cloud.width and 0 <= nly < cloud.height and
+                                    a_ch.getpixel((nlx, nly)) >= 50 and vrij):
                                 cx, cy = ncx, ncy; gevonden = True; break
                         if gevonden:
                             break
@@ -998,6 +1012,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
             _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                           shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
             placements.append((cx, cy, size, side, it["naam"]))
+            occupied.append((cx - cloud_pos[0], cy - cloud_pos[1], size))
     _paste_bottle(cv, bottle)                                   # fles eerst, labels daarna -> nooit afgesneden
     _draw_labels(cv, placements, rnd)
 
