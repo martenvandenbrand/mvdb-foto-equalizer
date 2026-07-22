@@ -916,7 +916,10 @@ def _usable_range(cloud, side, half, bottle_top_local, nw, N, cloud_pos, max_hal
 def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     N = cv.size[0]; rnd = random.Random(seed)
     kleur = kleur_override or _wine_color(bottle)
-    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.62))
+    # Een bredere wolk laat ook naast de hals en schouders veilige verfstroken over.
+    # Bij 0.62 was de wolk daar vrijwel even breed als fles + aroma, waardoor het
+    # bruikbare bereik onder de flessentop wegviel en alle smaken bovenin belandden.
+    base_cloud = _fit(_style_asset("aromawolk", kleur), int(N * 0.80))
     cloud = _cloud_variant(base_cloud, seed)               # per wijn unieke worp van dezelfde asset
     bp = _bottle_px()
     b = _trim(bottle); bw, bh = b.size
