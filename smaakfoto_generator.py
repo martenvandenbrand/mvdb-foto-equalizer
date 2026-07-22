@@ -804,7 +804,7 @@ def _gold_speckles(cv, cloud, cloud_pos, seed, kleur="rood", n=16):
         d.ellipse([x - r, y - r, x + r, y + r], fill=color + (op,))
         placed += 1
 
-def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, max_r=None, excl_x=None):
+def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=50, step=10, max_r=None, excl_x=None):
     """Absolute allerlaatste redmiddel: dichtstbijzijnde punt met echte wolk-verf, rondom een gok.
     excl_x (lokale x-range) wordt overgeslagen, zodat dit ook de flesuitsluiting respecteert."""
     a = cloud.getchannel("A")
@@ -825,7 +825,7 @@ def _nearest_paint(cloud, cloud_pos, cx_guess, cy_guess, threshold=90, step=10, 
                         return cloud_pos[0] + lx, cloud_pos[1] + ly
     return None                                                # nergens (buiten de uitsluiting) wolk gevonden
 
-def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=90, x_step=4,
+def _find_cloud_point(cloud, rnd, ly_target, side, half, excl, threshold=50, x_step=4,
                       y_radii=(0, 8, 20, 40, 80, 150, 260), gap_fracs=(0.18, 0.10, 0.05, 0.0),
                       max_y_radius=None):
     """Zoekt een ECHT geverifieerd wolk-pixel (x,y samen, geen los venster) bij een gewenste hoogte.
@@ -909,7 +909,7 @@ def _draw_labels(cv, placements, rnd):
         last_bottom[side] = ey + th / 2
 
 def _usable_range(cloud, side, half, bottle_top_local, nw, N, cloud_pos, max_half_extent,
-                  threshold=90, y_step=6, x_step=6, margin=24):
+                  threshold=50, y_step=6, x_step=6, margin=24):
     """Scant de ECHTE wolk-pixels (geen gok) om te bepalen welk verticaal bereik op deze kant
     bruikbaar is: waar zit verf, mét de flesuitsluiting al verwerkt (conservatief -- geldig voor
     élk item, klein of groot, in deze run). Basis voor een eerlijke, volledige verdeling."""
@@ -951,7 +951,7 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
     half = cloud.width // 2
     left_items  = [it for i, it in enumerate(items) if i % 2 == 0]
     right_items = [it for i, it in enumerate(items) if i % 2 == 1]
-    range_half_extent = int(FLAVOR_PX * 0.50 * 0.66) + 16    # milde marge vóór het meten (echte veiligheid zit per item)
+    range_half_extent = int(FLAVOR_PX * 0.42 * 0.66) + 12    # milde marge vóór het meten (echte veiligheid zit per item)
 
     # per kant het ECHTE bruikbare verticale bereik opmeten (i.p.v. een gegokt top/bottom)
     ranges = {}
@@ -992,18 +992,24 @@ def _compose_aromawolk(cv, bottle, prim, sec, seed, kleur_override=None):
                 if found is None:
                     found = _nearest_paint(cloud, cloud_pos, cx_guess=gok_cx, cy_guess=cloud_pos[1] + ly_target)
                 cx, cy = found if found else (gok_cx, cloud_pos[1] + ly_target)
-            # lichte correctie: raakt het toch net de fles (zeldzaam, diepste rijen), duw dan een klein
-            # stukje weg -- maar alleen als die duw ook echt nog op de wolk landt, anders liever een
-            # miniem randoverlapje dan alsnog los komen te zweven
+            # lichte correctie: raakt het toch net de fles (zeldzaam, diepste rijen), zoek dan in een
+            # klein venster naar de dichtstbijzijnde plek die zowel veilig als op de wolk is -- lukt dat
+            # niet, dan liever een miniem randoverlapje dan alsnog los komen te zweven
             he = int(size * 0.66)
             if bottle_top_r - he < cy < bottle_bottom_r + he:
                 min_off = nw // 2 + he + 24
                 if abs(cx - N // 2) < min_off:
-                    ncx = N // 2 + side * min_off
-                    nlx, nly = ncx - cloud_pos[0], cy - cloud_pos[1]
-                    if 0 <= nlx < cloud.width and 0 <= nly < cloud.height and \
-                       cloud.getchannel("A").getpixel((nlx, nly)) >= 80:
-                        cx = ncx
+                    a_ch = cloud.getchannel("A")
+                    gevonden = False
+                    for dy in (0, -20, 20, -45, 45, -75, 75):
+                        for extra in (0, 20, 45, 75, 110):
+                            ncx = N // 2 + side * (min_off + extra)
+                            ncy = cy + dy
+                            nlx, nly = ncx - cloud_pos[0], ncy - cloud_pos[1]
+                            if 0 <= nlx < cloud.width and 0 <= nly < cloud.height and a_ch.getpixel((nlx, nly)) >= 50:
+                                cx, cy = ncx, ncy; gevonden = True; break
+                        if gevonden:
+                            break
             cx = max(size // 2 + 10, min(N - size // 2 - 10, cx))
             _place_cutout(cv, it, cx, cy, size, rnd.uniform(-20, 20),
                           shadow=True, shadow_blur=10, shadow_opacity=45, shadow_offset=(4, 9))
