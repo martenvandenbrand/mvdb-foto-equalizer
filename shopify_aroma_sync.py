@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Koper & Karaf - Shopify Aroma Sync
-1. Creeert metafield definition (wine_profile.aroma_list)
-2. Synced alle aromas naar Shopify
+Synced alle aroma NAMEN uit flavor_meta.json naar Shopify metaveld
+Metaveld: custom.aroma_list (list.single_line_text_field)
 """
 
 import os
@@ -102,64 +102,6 @@ def gql(query, variables=None):
     
     return None, "Te vaak gethrottled/timeout"
 
-def create_metafield_definition():
-    """Create metafield definition if it doesn't exist"""
-    print("📋 Check/Create metafield definition...")
-    
-    mutation = """
-    mutation {
-      metafieldDefinitionCreate(
-        definition: {
-          namespace: "wine_profile"
-          key: "aroma_list"
-          type: "list.single_line_text_field"
-          name: "Aroma List"
-          description: "List of wine aromas (searchable)"
-        }
-      ) {
-        metafieldDefinition {
-          id
-          namespace
-          key
-          type
-        }
-        userErrors {
-          field
-          message
-        }
-      }
-    }
-    """
-    
-    if DRY_RUN:
-        print("   (DRY RUN - skip definition create)")
-        return True
-    
-    data, errors = gql(mutation)
-    
-    if errors:
-        # Check if it's "already exists" error (that's fine)
-        if "already exists" in str(errors):
-            print("   ✅ Definition bestaat al")
-            return True
-        print(f"   ❌ Fout: {errors}")
-        return False
-    
-    if data and data.get("metafieldDefinitionCreate", {}).get("metafieldDefinition"):
-        print("   ✅ Definition aangemaakt")
-        return True
-    
-    user_errors = data.get("metafieldDefinitionCreate", {}).get("userErrors", [])
-    if user_errors:
-        if "already exists" in str(user_errors):
-            print("   ✅ Definition bestaat al")
-            return True
-        print(f"   ❌ {user_errors}")
-        return False
-    
-    print("   ⚠️  Onbekende response")
-    return True  # Continue anyway
-
 def find_product_by_handle(handle):
     """Find product ID by handle"""
     query = """
@@ -179,7 +121,7 @@ def find_product_by_handle(handle):
     return None, None
 
 def set_aromas(product_id, aroma_names):
-    """Set aromas metafield"""
+    """Set aromas metafield (custom.aroma_list)"""
     # JSON array format
     aroma_list_json = json.dumps(aroma_names)
     aroma_list_escaped = aroma_list_json.replace('"', '\\"')
@@ -190,7 +132,7 @@ def set_aromas(product_id, aroma_names):
         metafields: [
           {{
             ownerId: "{product_id}"
-            namespace: "wine_profile"
+            namespace: "custom"
             key: "aroma_list"
             type: "list.single_line_text_field"
             value: "{aroma_list_escaped}"
@@ -256,11 +198,6 @@ def main():
     # Get access token
     print("🔐 Verbind met Shopify...")
     _access_token = get_access_token()
-    
-    # Create metafield definition
-    if not create_metafield_definition():
-        print("❌ Kan definition niet aanmaken")
-        sys.exit(1)
     
     # Prepare aroma data
     print("📝 Bereid aromas voor...\n")
@@ -354,7 +291,7 @@ def main():
         "not_found": not_found,
         "total_aromas_synced": total_aromas,
         "metafield": {
-            "namespace": "wine_profile",
+            "namespace": "custom",
             "key": "aroma_list",
             "type": "list.single_line_text_field"
         },
@@ -367,9 +304,9 @@ def main():
     
     print(f"\n💾 Resultaten: {results_file}")
     print(f"\n✨ Metaveld:")
-    print(f"   Namespace: wine_profile")
-    print(f"   Key: aroma_list")
+    print(f"   custom.aroma_list")
     print(f"   Type: list.single_line_text_field")
+    print(f"   Format: JSON array van aroma namen (searchable!)")
     
     # Exit code
     sys.exit(0 if failed == 0 else 1)
