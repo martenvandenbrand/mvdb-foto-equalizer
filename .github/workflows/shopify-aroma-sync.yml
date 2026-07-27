@@ -20,7 +20,7 @@ jobs:
       - name: Installeer dependencies
         run: pip install requests
       
-      - name: Sync aromas naar Shopify (List type)
+      - name: Sync aromas naar Shopify (list.single_line_text_field type)
         env:
           PYTHONUNBUFFERED: "1"
           SHOP: ${{ secrets.SHOP }}
@@ -46,7 +46,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "Geen wijzigingen in flavor_meta.json"
           else
-            git commit -m "Aromas gesynced met Shopify (List type) [skip ci]"
+            git commit -m "Aromas gesynced met Shopify (list.single_line_text_field) [skip ci]"
             git pull --rebase --autostash
             git push
           fi

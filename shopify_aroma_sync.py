@@ -2,7 +2,7 @@
 """
 Koper & Karaf - Shopify Aroma Sync v2
 Synchroniseert alle aroma NAMEN uit flavor_meta.json naar Shopify metaveld
-Als List type (searchable!) - zelfde pattern als custom.druivensoort
+Als List.single_line_text_field type (searchable!) - zelfde pattern als custom.druivensoort
 """
 
 import os
@@ -123,7 +123,7 @@ def find_product_by_handle(handle):
     return None, None
 
 def set_aromas(product_id, aroma_names):
-    """Set aromas metafield as List type"""
+    """Set aromas metafield as List.single_line_text_field type"""
     # List type values zijn newline-separated!
     aroma_list = "\n".join(aroma_names)
     
@@ -135,7 +135,7 @@ def set_aromas(product_id, aroma_names):
             ownerId: "{product_id}"
             namespace: "wine_profile"
             key: "aromas"
-            type: "list"
+            type: "list.single_line_text_field"
             value: "{aroma_list}"
           }}
         ]
@@ -176,7 +176,7 @@ def set_aromas(product_id, aroma_names):
 def main():
     global _access_token
     
-    print("\n🍷 Shopify Aroma Sync v2 (List Type)")
+    print("\n🍷 Shopify Aroma Sync v2 (List.single_line_text_field - Searchable!)")
     print("=" * 70)
     
     if DRY_RUN:
@@ -288,7 +288,7 @@ def main():
         "failed": failed,
         "not_found": not_found,
         "total_aromas_synced": total_aromas,
-        "field_type": "list",
+        "field_type": "list.single_line_text_field",
         "namespace": "wine_profile",
         "key": "aromas",
         "errors": errors[:10]
@@ -302,8 +302,9 @@ def main():
     print(f"\n✨ Metaveld info:")
     print(f"   Namespace: wine_profile")
     print(f"   Key: aromas")
-    print(f"   Type: list")
+    print(f"   Type: list.single_line_text_field")
     print(f"   Format: Newline-separated aroma names (searchable!)")
+    print(f"   Zelfde als: custom.druivensoort")
     
     # Exit code
     sys.exit(0 if failed == 0 else 1)
