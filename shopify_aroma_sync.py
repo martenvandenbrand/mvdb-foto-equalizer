@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Koper & Karaf - Shopify Aroma Sync
-Synchroniseert alle aromas uit flavor_meta.json naar Shopify metavelden
-OAuth-based access (SHOPIFY_CLIENT_ID + SHOPIFY_CLIENT_SECRET)
+Koper & Karaf - Shopify Aroma Sync v2
+Synchroniseert alle aroma NAMEN uit flavor_meta.json naar Shopify metaveld
+Als List type (searchable!) - zelfde pattern als custom.druivensoort
 """
 
 import os
@@ -122,10 +122,10 @@ def find_product_by_handle(handle):
     
     return None, None
 
-def set_aromas(product_id, aromas):
-    """Set aromas metafield"""
-    aromas_json = json.dumps(aromas, ensure_ascii=False)
-    aromas_json_escaped = aromas_json.replace("\\", "\\\\").replace('"', '\\"')
+def set_aromas(product_id, aroma_names):
+    """Set aromas metafield as List type"""
+    # List type values zijn newline-separated!
+    aroma_list = "\n".join(aroma_names)
     
     mutation = f"""
     mutation {{
@@ -135,8 +135,8 @@ def set_aromas(product_id, aromas):
             ownerId: "{product_id}"
             namespace: "wine_profile"
             key: "aromas"
-            type: "json"
-            value: "{aromas_json_escaped}"
+            type: "list"
+            value: "{aroma_list}"
           }}
         ]
       ) {{
@@ -176,7 +176,7 @@ def set_aromas(product_id, aromas):
 def main():
     global _access_token
     
-    print("\n🍷 Shopify Aroma Sync")
+    print("\n🍷 Shopify Aroma Sync v2 (List Type)")
     print("=" * 70)
     
     if DRY_RUN:
@@ -197,7 +197,7 @@ def main():
     print("🔐 Verbind met Shopify...")
     _access_token = get_access_token()
     
-    # Prepare aroma data (merge primary + secondary, remove duplicates)
+    # Prepare aroma data (extract only NAMES, remove duplicates)
     print("📝 Bereid aromas voor...\n")
     
     aroma_map = {}
@@ -206,21 +206,22 @@ def main():
         secondary = aromas.get('secundair', [])
         all_aromas = primary + secondary
         
-        # Remove duplicates by naam
+        # Extract ONLY the "naam" values and remove duplicates
         seen_names = set()
-        unique_aromas = []
+        unique_aroma_names = []
         for aroma in all_aromas:
-            if aroma['naam'] not in seen_names:
-                unique_aromas.append(aroma)
-                seen_names.add(aroma['naam'])
+            naam = aroma.get('naam', '').strip()
+            if naam and naam not in seen_names:
+                unique_aroma_names.append(naam)
+                seen_names.add(naam)
         
-        aroma_map[handle] = unique_aromas
+        aroma_map[handle] = unique_aroma_names
     
     # Process products
     handles = list(aroma_map.keys())
     total = len(handles)
     
-    print(f"🚀 Sync {total} producten")
+    print(f"🚀 Sync {total} producten (List type - searchable!)")
     if DRY_RUN:
         print("   (DRY RUN - geen echte updates)\n")
     else:
@@ -230,6 +231,7 @@ def main():
     failed = 0
     not_found = 0
     errors = []
+    total_aromas = 0
     
     for i, handle in enumerate(handles, 1):
         # Progress
@@ -244,12 +246,13 @@ def main():
             continue
         
         # Set aromas
-        aromas = aroma_map[handle]
-        success, error = set_aromas(product_id, aromas)
+        aroma_names = aroma_map[handle]
+        success, error = set_aromas(product_id, aroma_names)
         
         if success:
-            print(f"✅ ({len(aromas)} aromas)")
+            print(f"✅ ({len(aroma_names)} aromas)")
             successful += 1
+            total_aromas += len(aroma_names)
         else:
             print(f"❌ {error}")
             failed += 1
@@ -264,6 +267,7 @@ def main():
     print(f"  ✅ Succesvol: {successful}/{total}")
     print(f"  ❌ Fouten: {failed}/{total}")
     print(f"  ⏭️  Niet gevonden: {not_found}/{total}")
+    print(f"  📈 Totale aromas gesyncet: {total_aromas}")
     
     if DRY_RUN:
         print(f"\n⚠️  DRY RUN - Geen echte updates gedaan")
@@ -283,6 +287,10 @@ def main():
         "successful": successful,
         "failed": failed,
         "not_found": not_found,
+        "total_aromas_synced": total_aromas,
+        "field_type": "list",
+        "namespace": "wine_profile",
+        "key": "aromas",
         "errors": errors[:10]
     }
     
@@ -291,6 +299,11 @@ def main():
         json.dump(results, f, indent=2, ensure_ascii=False)
     
     print(f"\n💾 Resultaten: {results_file}")
+    print(f"\n✨ Metaveld info:")
+    print(f"   Namespace: wine_profile")
+    print(f"   Key: aromas")
+    print(f"   Type: list")
+    print(f"   Format: Newline-separated aroma names (searchable!)")
     
     # Exit code
     sys.exit(0 if failed == 0 else 1)
