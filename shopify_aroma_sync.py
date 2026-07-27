@@ -3,6 +3,7 @@
 Koper & Karaf - Shopify Aroma Metaobjects Sync
 1. Creëert metaobject instances per unieke aroma
 2. Zet references op products (list)
+Field key: "aroma" (niet "naam"!)
 """
 
 import os
@@ -30,7 +31,7 @@ TOKEN_URL = f"https://{SHOP}/admin/oauth/access_token"
 FLAVOR_FILE = Path("flavor_meta.json")
 
 _access_token = None
-_aroma_cache = {}  # Cache for found/created aromas
+_aroma_cache = {}
 
 # ======================= SHOPIFY API =======================
 
@@ -125,7 +126,7 @@ def find_or_create_aroma_metaobject(aroma_naam):
             fields = node.get("fields", [])
             
             for field in fields:
-                if field.get("key") == "naam" and field.get("value") == aroma_naam:
+                if field.get("key") == "aroma" and field.get("value") == aroma_naam:
                     _aroma_cache[aroma_naam] = node["id"]
                     return node["id"]
     
@@ -153,7 +154,7 @@ def find_or_create_aroma_metaobject(aroma_naam):
         "type": "aroma",
         "fields": [
             {
-                "key": "naam",
+                "key": "aroma",
                 "value": aroma_naam
             }
         ]
@@ -169,7 +170,6 @@ def find_or_create_aroma_metaobject(aroma_naam):
         _aroma_cache[aroma_naam] = aroma_id
         return aroma_id
     
-    # Check for user errors
     user_errors = data.get("metaobjectCreate", {}).get("userErrors", []) if data else []
     if user_errors:
         return None
@@ -393,6 +393,7 @@ def main():
         "aroma_metaobjects_failed": failed,
         "unique_aromas": len(all_aroma_names),
         "metaobject_type": "aroma",
+        "aroma_field_key": "aroma",
         "metafield": {
             "namespace": "custom",
             "key": "aromas",
@@ -408,6 +409,7 @@ def main():
     print(f"\n💾 Resultaten: {results_file}")
     print(f"\n✨ Setup:")
     print(f"   Metaobject type: aroma")
+    print(f"   Metaobject field: aroma")
     print(f"   Metaveld: custom.aromas (list.metaobject_reference)")
     
     sys.exit(0 if (failed_sync == 0 and failed == 0) else 1)
