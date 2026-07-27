@@ -3,6 +3,7 @@
 Koper & Karaf - Shopify Aroma Sync v2
 Synchroniseert alle aroma NAMEN uit flavor_meta.json naar Shopify metaveld
 Als List.single_line_text_field type (searchable!) - zelfde pattern als custom.druivensoort
+Metaveld: wine_profile.aroma_list (nieuw veld, niet 'aromas')
 """
 
 import os
@@ -134,7 +135,7 @@ def set_aromas(product_id, aroma_names):
           {{
             ownerId: "{product_id}"
             namespace: "wine_profile"
-            key: "aromas"
+            key: "aroma_list"
             type: "list.single_line_text_field"
             value: "{aroma_list}"
           }}
@@ -290,7 +291,7 @@ def main():
         "total_aromas_synced": total_aromas,
         "field_type": "list.single_line_text_field",
         "namespace": "wine_profile",
-        "key": "aromas",
+        "key": "aroma_list",
         "errors": errors[:10]
     }
     
@@ -301,7 +302,7 @@ def main():
     print(f"\n💾 Resultaten: {results_file}")
     print(f"\n✨ Metaveld info:")
     print(f"   Namespace: wine_profile")
-    print(f"   Key: aromas")
+    print(f"   Key: aroma_list (NEW - replaces old 'aromas')")
     print(f"   Type: list.single_line_text_field")
     print(f"   Format: Newline-separated aroma names (searchable!)")
     print(f"   Zelfde als: custom.druivensoort")
