@@ -187,8 +187,9 @@ def set_aroma_references(product_id, aroma_ids):
     if not aroma_ids:
         return True, None
     
-    references_value = "\n".join(aroma_ids)
-    references_value_escaped = references_value.replace('"', '\\"')
+    # JSON array format for list.metaobject_reference!
+    references_json = json.dumps(aroma_ids)
+    references_value_escaped = references_json.replace('"', '\\"')
     
     mutation = f"""
     mutation {{
