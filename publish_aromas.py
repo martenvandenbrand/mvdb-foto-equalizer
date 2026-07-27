@@ -79,18 +79,27 @@ for i, edge in enumerate(edges, 1):
     
     print(f"[{i:3d}/{len(edges)}] {aroma_name:30} ... ", end='', flush=True)
     
-    # Publish mutation - input must be a LIST of PublicationInput objects,
-    # each with a "publicationId" field (not a "publications" array)
+    # Metaobjects are NOT Products/Collections, so they don't implement the
+    # "Publishable" interface and publishablePublish doesn't apply to them.
+    # A metaobject with the "publishable" capability is published by setting
+    # its status to ACTIVE via metaobjectUpdate instead.
     mutation = f"""
     mutation {{
-      publishablePublish(
+      metaobjectUpdate(
         id: "{aroma_id}"
-        input: [
-          {{ publicationId: "gid://shopify/Publication/1" }}
-        ]
+        metaobject: {{
+          capabilities: {{
+            publishable: {{ status: ACTIVE }}
+          }}
+        }}
       ) {{
-        publishable {{
+        metaobject {{
           id
+          capabilities {{
+            publishable {{
+              status
+            }}
+          }}
         }}
         userErrors {{
           field
@@ -112,7 +121,7 @@ for i, edge in enumerate(edges, 1):
         })
         continue
     
-    publish_result = response.get("data", {}).get("publishablePublish", {})
+    publish_result = response.get("data", {}).get("metaobjectUpdate", {})
     user_errors = publish_result.get("userErrors", [])
     
     if user_errors:
