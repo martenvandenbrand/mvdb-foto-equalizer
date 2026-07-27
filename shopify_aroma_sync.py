@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Koper & Karaf - Shopify Aroma Metaobjects Sync
-1. Creëert metaobject type "aroma" (naam field)
-2. Creëert instances per unieke aroma
-3. Zet references op products (list)
+1. Creëert metaobject instances per unieke aroma
+2. Zet references op products (list)
+(Metaobject type 'aroma' moet al bestaan!)
 """
 
 import os
@@ -97,70 +97,12 @@ def gql(query, variables=None):
     
     return None, "Te vaak gethrottled/timeout"
 
-def create_metaobject_type():
-    """Create metaobject type 'aroma' if it doesn't exist"""
-    print("📋 Check/Create metaobject type 'aroma'...")
-    
-    if DRY_RUN:
-        print("   (DRY RUN - skip)")
-        return True
-    
-    mutation = """
-    mutation {
-      metaobjectTypeDefinitionCreate(
-        definition: {
-          name: "Aroma"
-          type: "aroma"
-          fieldDefinitions: [
-            {
-              key: "naam"
-              description: "Aroma naam"
-              type: "single_line_text_field"
-            }
-          ]
-        }
-      ) {
-        metaobjectTypeDefinition {
-          type
-          fieldDefinitions {
-            key
-            type
-          }
-        }
-        userErrors {
-          message
-        }
-      }
-    }
-    """
-    
-    data, errors = gql(mutation)
-    
-    if errors:
-        if "already exists" in str(errors):
-            print("   ✅ Type bestaat al")
-            return True
-        print(f"   ❌ Fout: {errors}")
-        return False
-    
-    if data and data.get("metaobjectTypeDefinitionCreate", {}).get("metaobjectTypeDefinition"):
-        print("   ✅ Type aangemaakt")
-        return True
-    
-    user_errors = data.get("metaobjectTypeDefinitionCreate", {}).get("userErrors", [])
-    if user_errors and "already exists" in str(user_errors):
-        print("   ✅ Type bestaat al")
-        return True
-    
-    print(f"   ⚠️  Onbekende response")
-    return True
-
 def find_or_create_aroma_metaobject(aroma_naam):
     """Find existing aroma metaobject or create new one"""
     # First try to find it
     query = """
-    query($query: String!) {
-      metaobjects(type: "aroma", first: 10, query: $query) {
+    query {
+      metaobjects(type: "aroma", first: 250) {
         edges {
           node {
             id
@@ -173,22 +115,32 @@ def find_or_create_aroma_metaobject(aroma_naam):
     }
     """
     
-    data, _ = gql(query, {"query": f'field:naam:{aroma_naam}'})
+    data, _ = gql(query)
     
     if data and data.get("metaobjects", {}).get("edges"):
         for edge in data["metaobjects"]["edges"]:
-            if edge["node"]["field"]["value"] == aroma_naam:
-                return edge["node"]["id"]
+            node = edge["node"]
+            field_value = node.get("field", {})
+            if isinstance(field_value, dict):
+                value = field_value.get("value")
+            else:
+                value = field_value
+            
+            if value == aroma_naam:
+                return node["id"]
     
     # Not found, create it
     if DRY_RUN:
-        return f"gid://shopify/Metaobject/aroma-{aroma_naam}"
+        return f"gid://shopify/Metaobject/aroma-{aroma_naam.lower().replace(' ', '-')}"
     
     mutation = """
     mutation($input: MetaobjectInput!) {
       metaobjectCreate(metaobject: $input) {
         metaobject {
           id
+          field(key: "naam") {
+            value
+          }
         }
         userErrors {
           message
@@ -210,7 +162,6 @@ def find_or_create_aroma_metaobject(aroma_naam):
     data, errors = gql(mutation, {"input": input_data})
     
     if errors:
-        print(f"    Error creating aroma '{aroma_naam}': {errors}")
         return None
     
     if data and data.get("metaobjectCreate", {}).get("metaobject"):
@@ -241,8 +192,9 @@ def set_aroma_references(product_id, aroma_ids):
     if not aroma_ids:
         return True, None
     
-    # Format: "gid://shopify/Metaobject/aroma-1\ngid://shopify/Metaobject/aroma-2"
+    # Format: "gid://shopify/Metaobject/id1\ngid://shopify/Metaobject/id2"
     references_value = "\n".join(aroma_ids)
+    references_value_escaped = references_value.replace('"', '\\"')
     
     mutation = f"""
     mutation {{
@@ -253,7 +205,7 @@ def set_aroma_references(product_id, aroma_ids):
             namespace: "custom"
             key: "aromas"
             type: "list.metaobject_reference"
-            value: "{references_value}"
+            value: "{references_value_escaped}"
           }}
         ]
       ) {{
@@ -315,12 +267,7 @@ def main():
     print("🔐 Verbind met Shopify...")
     _access_token = get_access_token()
     
-    # Step 1: Create metaobject type
-    if not create_metaobject_type():
-        print("❌ Kan metaobject type niet aanmaken")
-        sys.exit(1)
-    
-    # Step 2: Collect all unique aromas
+    # Collect all unique aromas
     print("📝 Verzamel unieke aromas...\n")
     
     all_aroma_names = set()
@@ -342,7 +289,7 @@ def main():
     
     print(f"📊 {len(all_aroma_names)} unieke aromas gevonden\n")
     
-    # Step 3: Create/find aroma metaobjects
+    # Create/find aroma metaobjects
     print("🔨 Create/Find aroma metaobjects...")
     aroma_id_map = {}
     
@@ -358,7 +305,7 @@ def main():
     
     print(f"\n✅ {len(aroma_id_map)} aroma metaobjecten klaar\n")
     
-    # Step 4: Set references on products
+    # Set references on products
     print(f"🚀 Sync {len(aroma_map)} producten")
     if DRY_RUN:
         print("   (DRY RUN - geen echte updates)\n")
@@ -443,8 +390,8 @@ def main():
     
     print(f"\n💾 Resultaten: {results_file}")
     print(f"\n✨ Metaobjecten Setup:")
-    print(f"   Type: aroma")
-    print(f"   Field: naam (single_line_text_field)")
+    print(f"   Type: aroma (handmatig aangemaakt)")
+    print(f"   Field: naam")
     print(f"   Instances: {len(aroma_id_map)}")
     print(f"   Metafield: custom.aromas (list.metaobject_reference)")
     
