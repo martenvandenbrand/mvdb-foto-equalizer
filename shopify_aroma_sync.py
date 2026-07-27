@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Koper & Karaf - Shopify Aroma Metaobjects Sync
-Uses inline input (no variables) for API 2026-01 compatibility
+JSON array format for list.metaobject_reference
 """
 
 import os
@@ -89,11 +89,10 @@ def gql(query, variables=None):
     return None, "Te vaak gethrottled/timeout"
 
 def find_or_create_aroma_metaobject(aroma_naam):
-    """Find or create aroma metaobject with inline input (no variables)"""
+    """Find or create aroma metaobject with inline input"""
     if aroma_naam in _aroma_cache:
         return _aroma_cache[aroma_naam]
     
-    # Find existing
     query = """
     {
       metaobjects(type: "aroma", first: 250) {
@@ -120,13 +119,11 @@ def find_or_create_aroma_metaobject(aroma_naam):
                     _aroma_cache[aroma_naam] = node["id"]
                     return node["id"]
     
-    # Not found, create with INLINE input (no variables!)
     if DRY_RUN:
         fake_id = f"gid://shopify/Metaobject/aroma-{aroma_naam.lower().replace(' ', '-')}"
         _aroma_cache[aroma_naam] = fake_id
         return fake_id
     
-    # Escape quotes for inline input
     aroma_escaped = aroma_naam.replace('"', '\\"')
     
     mutation = f"""
@@ -182,14 +179,18 @@ def find_product_by_handle(handle):
     
     return None
 
+def escape_for_graphql(s):
+    """Escape string for GraphQL - backslashes first, then quotes"""
+    return s.replace('\\', '\\\\').replace('"', '\\"')
+
 def set_aroma_references(product_id, aroma_ids):
-    """Set aroma metaobject references on product"""
+    """Set aroma metaobject references on product as JSON array"""
     if not aroma_ids:
         return True, None
     
-    # JSON array format for list.metaobject_reference!
+    # Create JSON array and escape for GraphQL
     references_json = json.dumps(aroma_ids)
-    references_value_escaped = references_json.replace('"', '\\"')
+    references_escaped = escape_for_graphql(references_json)
     
     mutation = f"""
     mutation {{
@@ -200,7 +201,7 @@ def set_aroma_references(product_id, aroma_ids):
             namespace: "custom"
             key: "aromas"
             type: "list.metaobject_reference"
-            value: "{references_value_escaped}"
+            value: "{references_escaped}"
           }}
         ]
       ) {{
@@ -262,7 +263,6 @@ def main():
     print("🔐 Verbind met Shopify...")
     _access_token = get_access_token()
     
-    # Collect aromas
     print("📝 Verzamel unieke aromas...")
     
     all_aroma_names = set()
@@ -284,7 +284,6 @@ def main():
     
     print(f"✅ {len(all_aroma_names)} unieke aromas gevonden\n")
     
-    # Create/find aroma metaobjects
     print("🔨 Create/Find aroma metaobjects...")
     aroma_id_map = {}
     created = 0
@@ -308,7 +307,6 @@ def main():
     else:
         print()
     
-    # Set references on products
     print(f"🚀 Sync {len(aroma_map)} producten")
     if DRY_RUN:
         print("   (DRY RUN - geen echte updates)\n")
@@ -330,7 +328,6 @@ def main():
             not_found += 1
             continue
         
-        # Get aroma IDs for this product
         aroma_ids = [aroma_id_map[naam] for naam in aroma_names if naam in aroma_id_map]
         
         if not aroma_ids:
@@ -348,7 +345,6 @@ def main():
             failed_sync += 1
             errors.append({"handle": handle, "error": error})
     
-    # Summary
     print(f"\n{'=' * 70}")
     print(f"SYNC VOLTOOID")
     print(f"{'=' * 70}\n")
@@ -369,7 +365,6 @@ def main():
         if len(errors) > 3:
             print(f"  ... en {len(errors) - 3} meer")
     
-    # Save results
     results = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "dry_run": DRY_RUN,
@@ -382,7 +377,6 @@ def main():
         "aroma_metaobjects_failed": failed,
         "unique_aromas": len(all_aroma_names),
         "metaobject_type": "aroma",
-        "aroma_field_key": "aroma",
         "metafield": {
             "namespace": "custom",
             "key": "aromas",
