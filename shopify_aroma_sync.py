@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Koper & Karaf - Shopify Aroma Sync v2
-Synchroniseert alle aroma NAMEN uit flavor_meta.json naar Shopify metaveld
-Als List.single_line_text_field type (searchable!) - zelfde pattern als custom.druivensoort
-Metaveld: wine_profile.aroma_list (nieuw veld, niet 'aromas')
+Koper & Karaf - Shopify Aroma Sync
+1. Creeert metafield definition (wine_profile.aroma_list)
+2. Synced alle aromas naar Shopify
 """
 
 import os
@@ -90,20 +89,76 @@ def gql(query, variables=None):
             
             # Handle other errors
             if "errors" in data:
-                print(f"  ❌ GraphQL error: {data['errors']}")
-                return None
+                return None, data['errors']
             
-            return data.get("data")
+            return data.get("data"), None
         
         except requests.exceptions.Timeout:
             print(f"  ⏱️  Timeout, poging {attempt + 1}/6")
             time.sleep(2 * (attempt + 1))
         except Exception as e:
             print(f"  ❌ Fout: {e}")
-            return None
+            return None, str(e)
     
-    print("  ❌ Te vaak gethrottled/timeout")
-    return None
+    return None, "Te vaak gethrottled/timeout"
+
+def create_metafield_definition():
+    """Create metafield definition if it doesn't exist"""
+    print("📋 Check/Create metafield definition...")
+    
+    mutation = """
+    mutation {
+      metafieldDefinitionCreate(
+        definition: {
+          namespace: "wine_profile"
+          key: "aroma_list"
+          type: "list.single_line_text_field"
+          name: "Aroma List"
+          description: "List of wine aromas (searchable)"
+        }
+      ) {
+        metafieldDefinition {
+          id
+          namespace
+          key
+          type
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+    """
+    
+    if DRY_RUN:
+        print("   (DRY RUN - skip definition create)")
+        return True
+    
+    data, errors = gql(mutation)
+    
+    if errors:
+        # Check if it's "already exists" error (that's fine)
+        if "already exists" in str(errors):
+            print("   ✅ Definition bestaat al")
+            return True
+        print(f"   ❌ Fout: {errors}")
+        return False
+    
+    if data and data.get("metafieldDefinitionCreate", {}).get("metafieldDefinition"):
+        print("   ✅ Definition aangemaakt")
+        return True
+    
+    user_errors = data.get("metafieldDefinitionCreate", {}).get("userErrors", [])
+    if user_errors:
+        if "already exists" in str(user_errors):
+            print("   ✅ Definition bestaat al")
+            return True
+        print(f"   ❌ {user_errors}")
+        return False
+    
+    print("   ⚠️  Onbekende response")
+    return True  # Continue anyway
 
 def find_product_by_handle(handle):
     """Find product ID by handle"""
@@ -117,17 +172,16 @@ def find_product_by_handle(handle):
     }
     """
     
-    result = gql(query, {"handle": handle})
+    result, _ = gql(query, {"handle": handle})
     if result and "productByHandle" in result and result["productByHandle"]:
         return result["productByHandle"]["id"], result["productByHandle"]["title"]
     
     return None, None
 
 def set_aromas(product_id, aroma_names):
-    """Set aromas metafield as List.single_line_text_field type"""
-    # List type values must be JSON array!
+    """Set aromas metafield"""
+    # JSON array format
     aroma_list_json = json.dumps(aroma_names)
-    # Escape quotes for GraphQL
     aroma_list_escaped = aroma_list_json.replace('"', '\\"')
     
     mutation = f"""
@@ -158,12 +212,15 @@ def set_aromas(product_id, aroma_names):
     if DRY_RUN:
         return True, None
     
-    result = gql(mutation)
+    data, errors = gql(mutation)
     
-    if not result:
+    if errors:
+        return False, str(errors)
+    
+    if not data:
         return False, "API error"
     
-    metafield_result = result.get("metafieldsSet", {})
+    metafield_result = data.get("metafieldsSet", {})
     user_errors = metafield_result.get("userErrors", [])
     
     if user_errors:
@@ -179,7 +236,7 @@ def set_aromas(product_id, aroma_names):
 def main():
     global _access_token
     
-    print("\n🍷 Shopify Aroma Sync v2 (List.single_line_text_field - Searchable!)")
+    print("\n🍷 Shopify Aroma Sync")
     print("=" * 70)
     
     if DRY_RUN:
@@ -200,7 +257,12 @@ def main():
     print("🔐 Verbind met Shopify...")
     _access_token = get_access_token()
     
-    # Prepare aroma data (extract only NAMES, remove duplicates)
+    # Create metafield definition
+    if not create_metafield_definition():
+        print("❌ Kan definition niet aanmaken")
+        sys.exit(1)
+    
+    # Prepare aroma data
     print("📝 Bereid aromas voor...\n")
     
     aroma_map = {}
@@ -224,7 +286,7 @@ def main():
     handles = list(aroma_map.keys())
     total = len(handles)
     
-    print(f"🚀 Sync {total} producten (List type - searchable!)")
+    print(f"🚀 Sync {total} producten")
     if DRY_RUN:
         print("   (DRY RUN - geen echte updates)\n")
     else:
@@ -291,9 +353,11 @@ def main():
         "failed": failed,
         "not_found": not_found,
         "total_aromas_synced": total_aromas,
-        "field_type": "list.single_line_text_field",
-        "namespace": "wine_profile",
-        "key": "aroma_list",
+        "metafield": {
+            "namespace": "wine_profile",
+            "key": "aroma_list",
+            "type": "list.single_line_text_field"
+        },
         "errors": errors[:10]
     }
     
@@ -302,12 +366,10 @@ def main():
         json.dump(results, f, indent=2, ensure_ascii=False)
     
     print(f"\n💾 Resultaten: {results_file}")
-    print(f"\n✨ Metaveld info:")
+    print(f"\n✨ Metaveld:")
     print(f"   Namespace: wine_profile")
-    print(f"   Key: aroma_list (NEW - replaces old 'aromas')")
+    print(f"   Key: aroma_list")
     print(f"   Type: list.single_line_text_field")
-    print(f"   Format: Newline-separated aroma names (searchable!)")
-    print(f"   Zelfde als: custom.druivensoort")
     
     # Exit code
     sys.exit(0 if failed == 0 else 1)
