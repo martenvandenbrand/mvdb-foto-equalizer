@@ -1,0 +1,52 @@
+name: Sync aromas naar Shopify
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (preview zonder updates)?"
+        type: boolean
+        default: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      
+      - name: Installeer dependencies
+        run: pip install requests
+      
+      - name: Sync aromas naar Shopify
+        env:
+          PYTHONUNBUFFERED: "1"
+          SHOP: ${{ secrets.SHOP }}
+          SHOPIFY_CLIENT_ID: ${{ secrets.SHOPIFY_CLIENT_ID }}
+          SHOPIFY_CLIENT_SECRET: ${{ secrets.SHOPIFY_CLIENT_SECRET }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python shopify_aroma_sync.py
+      
+      - name: Sync resultaten als artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aroma-sync-results
+          path: aroma_sync_*.json
+          if-no-files-found: ignore
+      
+      - name: Commit wijzigingen
+        if: always() && !inputs.dry_run
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add flavor_meta.json
+          if git diff --cached --quiet; then
+            echo "Geen wijzigingen in flavor_meta.json"
+          else
+            git commit -m "Aromas gesynced met Shopify [skip ci]"
+            git pull --rebase --autostash
+            git push
+          fi
