@@ -3,7 +3,6 @@
 Koper & Karaf - Shopify Aroma Metaobjects Sync
 1. Creëert metaobject instances per unieke aroma
 2. Zet references op products (list)
-(Metaobject type 'aroma' moet al bestaan!)
 """
 
 import os
@@ -31,6 +30,7 @@ TOKEN_URL = f"https://{SHOP}/admin/oauth/access_token"
 FLAVOR_FILE = Path("flavor_meta.json")
 
 _access_token = None
+_aroma_cache = {}  # Cache for found/created aromas
 
 # ======================= SHOPIFY API =======================
 
@@ -72,7 +72,6 @@ def gql(query, variables=None):
             
             if r.status_code == 429:
                 wait_time = int(r.headers.get("Retry-After", 2))
-                print(f"  ⏱️  Rate limited, wacht {wait_time}s...")
                 time.sleep(wait_time)
                 continue
             
@@ -80,7 +79,6 @@ def gql(query, variables=None):
             
             if "errors" in data and any("THROTTLED" in str(e) for e in data["errors"]):
                 wait_time = 2 * (attempt + 1)
-                print(f"  ⏱️  Throttled, wacht {wait_time}s...")
                 time.sleep(wait_time)
                 continue
             
@@ -90,7 +88,6 @@ def gql(query, variables=None):
             return data.get("data"), None
         
         except requests.exceptions.Timeout:
-            print(f"  ⏱️  Timeout, poging {attempt + 1}/6")
             time.sleep(2 * (attempt + 1))
         except Exception as e:
             return None, str(e)
@@ -99,14 +96,19 @@ def gql(query, variables=None):
 
 def find_or_create_aroma_metaobject(aroma_naam):
     """Find existing aroma metaobject or create new one"""
-    # First try to find it
+    # Check cache first
+    if aroma_naam in _aroma_cache:
+        return _aroma_cache[aroma_naam]
+    
+    # Try to find it
     query = """
     query {
       metaobjects(type: "aroma", first: 250) {
         edges {
           node {
             id
-            field(key: "naam") {
+            fields {
+              key
               value
             }
           }
@@ -115,35 +117,33 @@ def find_or_create_aroma_metaobject(aroma_naam):
     }
     """
     
-    data, _ = gql(query)
+    data, errors = gql(query)
     
     if data and data.get("metaobjects", {}).get("edges"):
         for edge in data["metaobjects"]["edges"]:
             node = edge["node"]
-            field_value = node.get("field", {})
-            if isinstance(field_value, dict):
-                value = field_value.get("value")
-            else:
-                value = field_value
+            fields = node.get("fields", [])
             
-            if value == aroma_naam:
-                return node["id"]
+            for field in fields:
+                if field.get("key") == "naam" and field.get("value") == aroma_naam:
+                    _aroma_cache[aroma_naam] = node["id"]
+                    return node["id"]
     
     # Not found, create it
     if DRY_RUN:
-        return f"gid://shopify/Metaobject/aroma-{aroma_naam.lower().replace(' ', '-')}"
+        fake_id = f"gid://shopify/Metaobject/aroma-{aroma_naam.lower().replace(' ', '-')}"
+        _aroma_cache[aroma_naam] = fake_id
+        return fake_id
     
     mutation = """
     mutation($input: MetaobjectInput!) {
       metaobjectCreate(metaobject: $input) {
         metaobject {
           id
-          field(key: "naam") {
-            value
-          }
         }
         userErrors {
           message
+          field
         }
       }
     }
@@ -165,7 +165,14 @@ def find_or_create_aroma_metaobject(aroma_naam):
         return None
     
     if data and data.get("metaobjectCreate", {}).get("metaobject"):
-        return data["metaobjectCreate"]["metaobject"]["id"]
+        aroma_id = data["metaobjectCreate"]["metaobject"]["id"]
+        _aroma_cache[aroma_naam] = aroma_id
+        return aroma_id
+    
+    # Check for user errors
+    user_errors = data.get("metaobjectCreate", {}).get("userErrors", []) if data else []
+    if user_errors:
+        return None
     
     return None
 
@@ -175,24 +182,21 @@ def find_product_by_handle(handle):
     query($handle: String!) {
       productByHandle(handle: $handle) {
         id
-        handle
-        title
       }
     }
     """
     
     result, _ = gql(query, {"handle": handle})
     if result and "productByHandle" in result and result["productByHandle"]:
-        return result["productByHandle"]["id"], result["productByHandle"]["title"]
+        return result["productByHandle"]["id"]
     
-    return None, None
+    return None
 
 def set_aroma_references(product_id, aroma_ids):
     """Set aroma metaobject references on product"""
     if not aroma_ids:
         return True, None
     
-    # Format: "gid://shopify/Metaobject/id1\ngid://shopify/Metaobject/id2"
     references_value = "\n".join(aroma_ids)
     references_value_escaped = references_value.replace('"', '\\"')
     
@@ -252,7 +256,9 @@ def main():
     print("=" * 70)
     
     if DRY_RUN:
-        print("⚠️  DRY RUN MODE\n")
+        print("⚠️  DRY RUN MODE - Instances worden gegenereerd maar niet opgeslagen\n")
+    else:
+        print("🔴 LIVE MODE - Instances worden echt aangemaakt!\n")
     
     if not FLAVOR_FILE.exists():
         print(f"❌ FOUT: {FLAVOR_FILE} niet gevonden")
@@ -268,7 +274,7 @@ def main():
     _access_token = get_access_token()
     
     # Collect all unique aromas
-    print("📝 Verzamel unieke aromas...\n")
+    print("📝 Verzamel unieke aromas...")
     
     all_aroma_names = set()
     aroma_map = {}
@@ -287,11 +293,13 @@ def main():
         
         aroma_map[handle] = unique_aroma_names
     
-    print(f"📊 {len(all_aroma_names)} unieke aromas gevonden\n")
+    print(f"✅ {len(all_aroma_names)} unieke aromas gevonden\n")
     
     # Create/find aroma metaobjects
     print("🔨 Create/Find aroma metaobjects...")
     aroma_id_map = {}
+    created = 0
+    failed = 0
     
     for i, aroma_naam in enumerate(sorted(all_aroma_names), 1):
         print(f"   [{i:3d}/{len(all_aroma_names)}] {aroma_naam:30} ... ", end='', flush=True)
@@ -299,11 +307,17 @@ def main():
         aroma_id = find_or_create_aroma_metaobject(aroma_naam)
         if aroma_id:
             aroma_id_map[aroma_naam] = aroma_id
+            created += 1
             print("✅")
         else:
+            failed += 1
             print("❌")
     
-    print(f"\n✅ {len(aroma_id_map)} aroma metaobjecten klaar\n")
+    print(f"\n✅ {created}/{len(all_aroma_names)} aroma metaobjecten klaar")
+    if failed > 0:
+        print(f"⚠️  {failed} mislukt\n")
+    else:
+        print()
     
     # Set references on products
     print(f"🚀 Sync {len(aroma_map)} producten")
@@ -313,14 +327,14 @@ def main():
         print()
     
     successful = 0
-    failed = 0
+    failed_sync = 0
     not_found = 0
     errors = []
     
     for i, (handle, aroma_names) in enumerate(aroma_map.items(), 1):
         print(f"[{i:3d}/{len(aroma_map)}] {handle[:50]:50} ... ", end='', flush=True)
         
-        product_id, _ = find_product_by_handle(handle)
+        product_id = find_product_by_handle(handle)
         
         if not product_id:
             print("❌ Niet gevonden")
@@ -332,7 +346,7 @@ def main():
         
         if not aroma_ids:
             print("❌ Geen aromas")
-            failed += 1
+            failed_sync += 1
             continue
         
         success, error = set_aroma_references(product_id, aroma_ids)
@@ -342,7 +356,7 @@ def main():
             successful += 1
         else:
             print(f"❌ {error}")
-            failed += 1
+            failed_sync += 1
             errors.append({"handle": handle, "error": error})
     
     # Summary
@@ -351,29 +365,32 @@ def main():
     print(f"{'=' * 70}\n")
     
     print(f"📊 Resultaten:")
-    print(f"  ✅ Succesvol: {successful}/{len(aroma_map)}")
-    print(f"  ❌ Fouten: {failed}/{len(aroma_map)}")
+    print(f"  ✅ Producten gesyncet: {successful}/{len(aroma_map)}")
+    print(f"  ❌ Fouten: {failed_sync}/{len(aroma_map)}")
     print(f"  ⏭️  Niet gevonden: {not_found}/{len(aroma_map)}")
     print(f"  🔗 Aroma metaobjecten: {len(aroma_id_map)}")
     
     if DRY_RUN:
-        print(f"\n⚠️  DRY RUN - Geen echte updates")
+        print(f"\n⚠️  DRY RUN - Geen echte updates gedaan")
     
     if errors:
-        print(f"\n⚠️  Fouten:")
-        for err in errors[:5]:
+        print(f"\n⚠️  Sync fouten:")
+        for err in errors[:3]:
             print(f"  - {err['handle']}: {err['error']}")
-        if len(errors) > 5:
-            print(f"  ... en {len(errors) - 5} meer")
+        if len(errors) > 3:
+            print(f"  ... en {len(errors) - 3} meer")
     
     # Save results
     results = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "dry_run": DRY_RUN,
+        "products_total": len(aroma_map),
         "products_synced": successful,
-        "products_failed": failed,
+        "products_failed": failed_sync,
         "products_not_found": not_found,
-        "aroma_metaobjects_created": len(aroma_id_map),
+        "aroma_metaobjects_total": len(aroma_id_map),
+        "aroma_metaobjects_created": created,
+        "aroma_metaobjects_failed": failed,
         "unique_aromas": len(all_aroma_names),
         "metaobject_type": "aroma",
         "metafield": {
@@ -389,13 +406,11 @@ def main():
         json.dump(results, f, indent=2, ensure_ascii=False)
     
     print(f"\n💾 Resultaten: {results_file}")
-    print(f"\n✨ Metaobjecten Setup:")
-    print(f"   Type: aroma (handmatig aangemaakt)")
-    print(f"   Field: naam")
-    print(f"   Instances: {len(aroma_id_map)}")
-    print(f"   Metafield: custom.aromas (list.metaobject_reference)")
+    print(f"\n✨ Setup:")
+    print(f"   Metaobject type: aroma")
+    print(f"   Metaveld: custom.aromas (list.metaobject_reference)")
     
-    sys.exit(0 if failed == 0 else 1)
+    sys.exit(0 if (failed_sync == 0 and failed == 0) else 1)
 
 if __name__ == "__main__":
     main()
