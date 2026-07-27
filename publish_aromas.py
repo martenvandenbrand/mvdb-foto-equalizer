@@ -79,14 +79,15 @@ for i, edge in enumerate(edges, 1):
     
     print(f"[{i:3d}/{len(edges)}] {aroma_name:30} ... ", end='', flush=True)
     
-    # Publish mutation - use "publications" instead of "publicationIds"
+    # Publish mutation - input must be a LIST of PublicationInput objects,
+    # each with a "publicationId" field (not a "publications" array)
     mutation = f"""
     mutation {{
       publishablePublish(
         id: "{aroma_id}"
-        input: {{
-          publications: ["gid://shopify/Publication/1"]
-        }}
+        input: [
+          {{ publicationId: "gid://shopify/Publication/1" }}
+        ]
       ) {{
         publishable {{
           id
