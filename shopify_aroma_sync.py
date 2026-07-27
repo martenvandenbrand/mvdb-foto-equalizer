@@ -125,8 +125,10 @@ def find_product_by_handle(handle):
 
 def set_aromas(product_id, aroma_names):
     """Set aromas metafield as List.single_line_text_field type"""
-    # List type values zijn newline-separated!
-    aroma_list = "\n".join(aroma_names)
+    # List type values must be JSON array!
+    aroma_list_json = json.dumps(aroma_names)
+    # Escape quotes for GraphQL
+    aroma_list_escaped = aroma_list_json.replace('"', '\\"')
     
     mutation = f"""
     mutation {{
@@ -137,7 +139,7 @@ def set_aromas(product_id, aroma_names):
             namespace: "wine_profile"
             key: "aroma_list"
             type: "list.single_line_text_field"
-            value: "{aroma_list}"
+            value: "{aroma_list_escaped}"
           }}
         ]
       ) {{
