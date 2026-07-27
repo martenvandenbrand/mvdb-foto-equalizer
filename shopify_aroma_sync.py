@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """
 Koper & Karaf - Shopify Aroma Metaobjects Sync
-1. Creëert metaobject instances per unieke aroma
-2. Zet references op products (list)
-Field key: "aroma" (niet "naam"!)
+Uses inline input (no variables) for API 2026-01 compatibility
 """
 
 import os
@@ -19,7 +17,6 @@ def env(k, d=""):
 def env_bool(k, d):
     return os.environ.get(k, str(d)).strip().lower() in ("1", "true", "yes", "ja")
 
-# ======================= CONFIGURATIE =======================
 SHOP = env("SHOP", "koperenkaraf.myshopify.com")
 CLIENT_ID = env("SHOPIFY_CLIENT_ID", "")
 CLIENT_SECRET = env("SHOPIFY_CLIENT_SECRET", "")
@@ -33,12 +30,9 @@ FLAVOR_FILE = Path("flavor_meta.json")
 _access_token = None
 _aroma_cache = {}
 
-# ======================= SHOPIFY API =======================
-
 def get_access_token():
-    """Get OAuth access token"""
     if not CLIENT_ID or not CLIENT_SECRET:
-        print("❌ FOUT: SHOPIFY_CLIENT_ID en SHOPIFY_CLIENT_SECRET niet ingesteld")
+        print("❌ FOUT: Secrets niet ingesteld")
         sys.exit(1)
     
     try:
@@ -56,7 +50,6 @@ def get_access_token():
         sys.exit(1)
 
 def gql(query, variables=None):
-    """Execute GraphQL query"""
     headers = {
         "X-Shopify-Access-Token": _access_token,
         "Content-Type": "application/json"
@@ -96,14 +89,13 @@ def gql(query, variables=None):
     return None, "Te vaak gethrottled/timeout"
 
 def find_or_create_aroma_metaobject(aroma_naam):
-    """Find existing aroma metaobject or create new one"""
-    # Check cache first
+    """Find or create aroma metaobject with inline input (no variables)"""
     if aroma_naam in _aroma_cache:
         return _aroma_cache[aroma_naam]
     
-    # Try to find it
+    # Find existing
     query = """
-    query {
+    {
       metaobjects(type: "aroma", first: 250) {
         edges {
           node {
@@ -118,49 +110,47 @@ def find_or_create_aroma_metaobject(aroma_naam):
     }
     """
     
-    data, errors = gql(query)
+    data, _ = gql(query)
     
     if data and data.get("metaobjects", {}).get("edges"):
         for edge in data["metaobjects"]["edges"]:
             node = edge["node"]
-            fields = node.get("fields", [])
-            
-            for field in fields:
+            for field in node.get("fields", []):
                 if field.get("key") == "aroma" and field.get("value") == aroma_naam:
                     _aroma_cache[aroma_naam] = node["id"]
                     return node["id"]
     
-    # Not found, create it
+    # Not found, create with INLINE input (no variables!)
     if DRY_RUN:
         fake_id = f"gid://shopify/Metaobject/aroma-{aroma_naam.lower().replace(' ', '-')}"
         _aroma_cache[aroma_naam] = fake_id
         return fake_id
     
-    mutation = """
-    mutation($input: MetaobjectInput!) {
-      metaobjectCreate(metaobject: $input) {
-        metaobject {
+    # Escape quotes for inline input
+    aroma_escaped = aroma_naam.replace('"', '\\"')
+    
+    mutation = f"""
+    mutation {{
+      metaobjectCreate(metaobject: {{
+        type: "aroma"
+        fields: [
+          {{
+            key: "aroma"
+            value: "{aroma_escaped}"
+          }}
+        ]
+      }}) {{
+        metaobject {{
           id
-        }
-        userErrors {
+        }}
+        userErrors {{
           message
-          field
-        }
-      }
-    }
+        }}
+      }}
+    }}
     """
     
-    input_data = {
-        "type": "aroma",
-        "fields": [
-            {
-                "key": "aroma",
-                "value": aroma_naam
-            }
-        ]
-    }
-    
-    data, errors = gql(mutation, {"input": input_data})
+    data, errors = gql(mutation)
     
     if errors:
         return None
@@ -247,8 +237,6 @@ def set_aroma_references(product_id, aroma_ids):
     
     return False, "Onbekende fout"
 
-# ======================= MAIN =======================
-
 def main():
     global _access_token
     
@@ -256,9 +244,9 @@ def main():
     print("=" * 70)
     
     if DRY_RUN:
-        print("⚠️  DRY RUN MODE - Instances worden gegenereerd maar niet opgeslagen\n")
+        print("⚠️  DRY RUN MODE\n")
     else:
-        print("🔴 LIVE MODE - Instances worden echt aangemaakt!\n")
+        print("🔴 LIVE MODE\n")
     
     if not FLAVOR_FILE.exists():
         print(f"❌ FOUT: {FLAVOR_FILE} niet gevonden")
@@ -273,7 +261,7 @@ def main():
     print("🔐 Verbind met Shopify...")
     _access_token = get_access_token()
     
-    # Collect all unique aromas
+    # Collect aromas
     print("📝 Verzamel unieke aromas...")
     
     all_aroma_names = set()
@@ -371,7 +359,7 @@ def main():
     print(f"  🔗 Aroma metaobjecten: {len(aroma_id_map)}")
     
     if DRY_RUN:
-        print(f"\n⚠️  DRY RUN - Geen echte updates gedaan")
+        print(f"\n⚠️  DRY RUN - Geen echte updates")
     
     if errors:
         print(f"\n⚠️  Sync fouten:")
